@@ -7,7 +7,7 @@ import random
 
 class Schelling():
 
-    def __init__(self, N=40, q=100):
+    def __init__(self, N=40, q=100, k=4):
         self.N = N
         self.population = int(N * N * 0.90)
 
@@ -31,7 +31,8 @@ class Schelling():
 
         # q is the number of empty sequential cells to move to
         self.q = q
-
+        # k is the number of neighbors to be around you to be happy
+        self.k = k
         self.epochs = 50
         
 
@@ -46,27 +47,48 @@ class Schelling():
             for i in range(self.N):
                 for j in range(self.N):
                     x0, y0 = (x + i) % self.N, (y + j) % self.N
-                    print(self.space)
-                    print(x0, y0)
-                    h = self.rand_happiness(x0, y0)
-                    print(h)
-                    quit()
+                    h = self.happiness(x0, y0)
 
+                    if h == 0:
+                        # Update that position
+                        x1, y1 = self.find_random_open()
+                        self.space[x1, y1] = self.space[x0, y0]
+                        self.space[x0, y0] = 0
+                        
+            print(self.total_happiness())
 
         pass
 
-    def rand_happiness(self, x, y):
+    def happiness(self, x, y):
         # Calculate the happiness for a random location
+
         # Sums the values of all the neighbors
         total = -self.space[x, y]
         for i in range(-1, 2, 1):
             for j in range(-1, 2, 1):
-                x0, y0 = (x + i) % self.N, (y + i) % self.N
+                x0, y0 = (x + i) % self.N, (y + j) % self.N
                 total += self.space[x0, y0]
                 
-        # Returns 1 if value greater than 0, -1 if less than 0, and 0 otherwise
-        if total == 0: return 0
-        return total/abs(total)
+        # returns 1 if the cell is "happy", 0 otherwise
+        if total >= self.k and self.space[x, y] == 1:
+            return 1
+        elif total <= -self.k and self.space[x, y] == -1:
+            return 1
+        return 0
+
+    def find_random_open(self):
+        x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
+        while self.space[x, y] != 0:
+            x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
+
+        return x, y
+
+    def total_happiness(self):
+        total = 0
+        for i in range(self.N):
+            for j in range(self.N):
+                total += self.happiness(i, j)
+        return total
 
     def social_network(self):
         pass
