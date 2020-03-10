@@ -4,10 +4,12 @@
 
 import numpy as np
 import random
+from PIL import Image
+import matplotlib.pyplot as plt
 
 class Schelling():
 
-    def __init__(self, N=40, q=100, k=4):
+    def __init__(self, N=40, q=100, k=4, epochs=50):
         self.N = N
         self.population = int(N * N * 0.90)
 
@@ -33,9 +35,7 @@ class Schelling():
         self.q = q
         # k is the number of neighbors to be around you to be happy
         self.k = k
-        self.epochs = 50
-        
-
+        self.epochs = epochs
 
     def random_move(self):
         # How to move each object in a random order? Could start at a different place each time
@@ -54,9 +54,13 @@ class Schelling():
                         x1, y1 = self.find_random_open()
                         self.space[x1, y1] = self.space[x0, y0]
                         self.space[x0, y0] = 0
-                        
-            print(self.total_happiness())
-
+                
+            # Scenario where everyone is happy
+            if self.total_happiness() == self.population:
+                break
+            
+            print(self.total_happiness() / self.population)
+        self.space_to_image()
         pass
 
     def happiness(self, x, y):
@@ -105,8 +109,31 @@ class Schelling():
         # Sean Rice's choice policy
         pass
 
+    def space_to_image(self):
+        im = np.zeros((self.N, self.N, 3), dtype=np.uint8)
+        for i in range(self.N):
+            for j in range(self.N):
+                if self.space[i, j] == 1:
+                    im[i, j] = [255, 0, 0]
+                elif self.space[i, j] == -1:
+                    im[i, j] = [0, 0, 255]
+                else:
+                    im[i, j] = [255, 255, 255]
+        # im = Image.fromarray(np.uint8(cm.gist_earth(im)) *255)
+        # plt.imsave("image.png", im, cmap='Greys')
+        # plt.imshow("image.png", im, interpolation='nearest')
+        # plt.show()
+
+        # Want the image to be 512 x 512
+        scale = 1024 / (self.N)
+
+        img = Image.fromarray(im, 'RGB')
+        img = img.resize((round(img.size[0]*scale), round(img.size[1]*scale)))
+        img.save('my.png')
+        img.show()
+
 if __name__ == "__main__":
-    s = Schelling(10)
+    s = Schelling(N=100, k=4, epochs=100)
     print("Simulating...")
     s.random_move()
     print("Completed")
