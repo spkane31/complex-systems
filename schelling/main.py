@@ -63,7 +63,6 @@ class Schelling():
 
         for _ in range(self.iterations):
             self.initialize_space()
-            print(self.space)
             # How to move each object in a random order? Could start at a different place each time
             happiness_temp = []
             # Find a random starting point and iterate from there
@@ -91,7 +90,6 @@ class Schelling():
                 
                 if self.print_statements: print(t_h / self.population)
                 happiness_temp.append(t_h/self.population)
-            print(self.space)
             if self.images: self.space_to_image()
             # Produce timeseries for the happiness
             happiness_values.append(happiness_temp)
@@ -104,11 +102,10 @@ class Schelling():
 
         self.happiness_ts.append(temp)
         
-        # if self.images: self.space_to_image()
         pass
 
     def happiness(self, x, y):
-        # Calculate the happiness for a random location
+        # Calculate whether an agent is happy at it's own location
 
         # Sums the values of all the neighbors
         total = -self.space[x, y]
@@ -137,7 +134,6 @@ class Schelling():
         # Looks at 8 cells, perfect happiness is all similar
         return total / 8
 
-
     def find_random_open(self, x, y):
         cur_happiness = self.happiness_value(x, y, self.space[x, y])
 
@@ -165,8 +161,7 @@ class Schelling():
 
         for _ in range(self.iterations):
             self.initialize_space()
-            # TODO: are the friends in same group (-1 or 1) or are they truly random
-
+            
             # First find each agents "friends", randomly. This will be stored in a dictionary
             # this will require a lot of re-writing, but first thing that came to mind
             self.friends = {}
@@ -224,6 +219,7 @@ class Schelling():
                 happiness_temp.append(self.total_happiness()/self.population)
             
             happiness_values.append(happiness_temp)
+            if self.images: self.space_to_image()
 
         temp = []
         for i in range(self.epochs):
@@ -247,7 +243,10 @@ class Schelling():
                 for j in range(-int(self.p/2), int((self.p+1)/2), 1):
                     x0, y0 = (x + i) % self.N, (y + j) % self.N
                     if self.space[x0, y0] == 0:
-                        if (x0, y0) not in locs:
+                        h = self.happiness_value(x0, y0, self.space[x, y])
+                        if h > 0 and self.space[x, y] > 0:
+                            locs.append((x0, y0))
+                        if h < 0 and self.space[x, y] < 0:
                             locs.append((x0, y0))
 
         return locs
@@ -284,20 +283,17 @@ class Schelling():
         file_name = f"{datetime.datetime.now()}".split()[0]
         file_name += f"_k={self.k}_N={self.N}_epochs={self.epochs}"
         img.save(file_name+ ".png")
-        # img.show()
 
 if __name__ == "__main__":
 
-    epochs = 25
-    iterations = 1
+    epochs = 30
+    iterations = 30
 
-    s = Schelling(N=10, k=4, epochs=epochs, iterations=iterations)
+    s = Schelling(N=40, k=4, epochs=epochs, iterations=iterations)
     print("Simulating...")
 
     print("Random...")
-    s.images = True
     s.random_move()
-    quit()
 
     labels = ["Random"]
 
