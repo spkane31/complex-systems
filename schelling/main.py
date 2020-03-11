@@ -6,6 +6,7 @@ import numpy as np
 import random
 from PIL import Image
 import matplotlib.pyplot as plt
+import datetime
 
 class Schelling():
 
@@ -37,6 +38,14 @@ class Schelling():
         self.k = k
         self.epochs = epochs
 
+        self.print_statements = True
+
+        # Timeseries of happiness values
+        self.happiness_ts = []
+
+    def get_random_pt(self):
+        return random.randint(0, self.N-1), random.randint(0, self.N-1)
+
     def random_move(self):
         # How to move each object in a random order? Could start at a different place each time
 
@@ -54,13 +63,17 @@ class Schelling():
                         x1, y1 = self.find_random_open()
                         self.space[x1, y1] = self.space[x0, y0]
                         self.space[x0, y0] = 0
-                
+            t_h = self.total_happiness()
             # Scenario where everyone is happy
-            if self.total_happiness() == self.population:
+            if t_h == self.population:
                 break
             
-            print(self.total_happiness() / self.population)
+            if self.print_statements: print(t_h / self.population)
+            self.happiness_ts.append(t_h)
+
         self.space_to_image()
+
+        # Produce timeseries for the happiness
         pass
 
     def happiness(self, x, y):
@@ -94,8 +107,81 @@ class Schelling():
                 total += self.happiness(i, j)
         return total
 
-    def social_network(self):
+    def social_network(self, n=5, p=3):
+        # TODO: are the friends in same group (-1 or 1) or are they truly random
+
+        # First find each agents "friends", randomly. This will be stored in a dictionary
+        # this will require a lot of re-writing, but first thing that came to mind
+        self.friends = {}
+        
+        # p = size of square neighborhood to look at
+        self.p = p
+        # n = number of friends
+        self.n = n
+
+        for i in range(self.N):
+            for j in range(self.N):
+                if self.space[i, j] != 0:
+                    temp = []
+                    while len(temp) < n:
+                        x, y = self.get_random_pt()
+                        if (x,y) not in temp:
+                            temp.append((x, y))
+                    self.friends[(i, j)] = temp
+        print(len(self.friends))
+        # 
+        for _ in range(self.epochs):
+            for i in range(self.N):
+                for j in range(self.N):
+
+                    if self.happiness(i, j) == 0 and self.space[i, j] != 0:
+                        # Not "happy", look for new place
+                        # print(self.space)
+
+                        # print(i, j)
+
+                        # print(self.friends[(i, j)])
+                        locations = self.ask_friends(i, j)
+                        # print(locations)
+                        if len(locations) > 0:
+                            new_loc = locations[random.randint(0, len(locations)-1)]
+                        else:
+                            x, y = self.get_random_pt()
+                            while self.space[x, y] != 0:
+                                x, y = self.get_random_pt()
+                            new_loc = (x, y)
+                        # print(new_loc)
+                        self.friends[new_loc] = self.friends[(i, j)]
+                        self.friends[(i, j)] = []
+
+                        # print(self.friends[new_loc])
+                        # print(self.friends[(i, j)])
+
+                        self.space[new_loc[0], new_loc[1]] = self.space[i, j]
+                        self.space[i, j] = 0
+
+                        # print(self.space)
+
+                        # quit()
+            if self.print_statements: print(self.total_happiness() / self.population)
+        
+        self.space_to_image()
         pass
+
+    def ask_friends(self, x, y):
+        # TODO: the range to look at needs to be fixed
+        f = self.friends[(x, y)]
+        locs = []
+        for friend in f:
+            x, y = friend
+            for i in range(-int(self.p/2), int((self.p+1)/2), 1):
+                for j in range(-int(self.p/2), int((self.p+1)/2), 1):
+                    x0, y0 = (x + i) % self.N, (y + j) % self.N
+                    if self.space[x0, y0] == 0:
+                        if (x0, y0) not in locs:
+                            locs.append((x0, y0))
+
+        return locs
 
     def sean_kane(self):
         # Sean Kane's choice policy
@@ -119,21 +205,20 @@ class Schelling():
                     im[i, j] = [0, 0, 255]
                 else:
                     im[i, j] = [255, 255, 255]
-        # im = Image.fromarray(np.uint8(cm.gist_earth(im)) *255)
-        # plt.imsave("image.png", im, cmap='Greys')
-        # plt.imshow("image.png", im, interpolation='nearest')
-        # plt.show()
 
         # Want the image to be 512 x 512
-        scale = 1024 / (self.N)
+        scale = 512 / (self.N)
 
         img = Image.fromarray(im, 'RGB')
-        img = img.resize((round(img.size[0]*scale), round(img.size[1]*scale)))
-        img.save('my.png')
-        img.show()
+        img = img.resize((round(img.size[0]*scale), round(img.size[1]*scale)), Image.NEAREST)
+
+        file_name = f"{datetime.datetime.now()}".split()[0]
+        file_name += f"_k={self.k}_N={self.N}_epochs={self.epochs}"
+        img.save(file_name+ ".png")
+        # img.show()
 
 if __name__ == "__main__":
     s = Schelling(N=100, k=4, epochs=100)
     print("Simulating...")
-    s.random_move()
+    s.social_network(n=5, p=4)
     print("Completed")
