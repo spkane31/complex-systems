@@ -31,6 +31,8 @@ class Schelling():
         self.happiness_ts = []
         self.iterations = iterations
 
+        self.open_spaces = []
+
     def initialize_space(self):
         self.space = np.zeros((self.N, self.N), dtype=int)
         # randomly initialize the locations
@@ -48,6 +50,11 @@ class Schelling():
                 x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
             self.space[x][y] = -1
 
+        for i in range(self.N):
+            for j in range(self.N):
+                if self.space[i, j] == 0:
+                    self.open_spaces.append((i, j))
+
     def get_random_pt(self):
         return random.randint(0, self.N-1), random.randint(0, self.N-1)
 
@@ -55,8 +62,8 @@ class Schelling():
         happiness_values = []
 
         for _ in range(self.iterations):
-
             self.initialize_space()
+            print(self.space)
             # How to move each object in a random order? Could start at a different place each time
             happiness_temp = []
             # Find a random starting point and iterate from there
@@ -69,10 +76,14 @@ class Schelling():
                         h = self.happiness(x0, y0)
 
                         if h == 0:
-                            # Update that position
-                            x1, y1 = self.find_random_open()
+                            # If the agent is unhappy update that position
+                            x1, y1 = self.find_random_open(x0, y0)
+                            
                             self.space[x1, y1] = self.space[x0, y0]
                             self.space[x0, y0] = 0
+                            self.open_spaces.remove((x1, y1))
+                            self.open_spaces.append((x0, y0))
+
                 t_h = self.total_happiness()
                 # Scenario where everyone is happy
                 if t_h == self.population:
@@ -80,7 +91,8 @@ class Schelling():
                 
                 if self.print_statements: print(t_h / self.population)
                 happiness_temp.append(t_h/self.population)
-
+            print(self.space)
+            if self.images: self.space_to_image()
             # Produce timeseries for the happiness
             happiness_values.append(happiness_temp)
         temp = []
@@ -92,7 +104,7 @@ class Schelling():
 
         self.happiness_ts.append(temp)
         
-        if self.images: self.space_to_image()
+        # if self.images: self.space_to_image()
         pass
 
     def happiness(self, x, y):
@@ -112,12 +124,34 @@ class Schelling():
             return 1
         return 0
 
-    def find_random_open(self):
-        x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
-        while self.space[x, y] != 0:
-            x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
+    def happiness_value(self, x, y, cur_value):
+        # Calculate the happiness for a random location
+        total = 0
+        # Sums the values of all the neighbors if they're the same as the cur_value
+        for i in range(-1, 2, 1):
+            for j in range(-1, 2, 1):
+                x0, y0 = (x + i) % self.N, (y + j) % self.N
+                if self.space[x0, y0] == cur_value:
+                    total += self.space[x0, y0]
 
-        return x, y
+        # Looks at 8 cells, perfect happiness is all similar
+        return total / 8
+
+
+    def find_random_open(self, x, y):
+        cur_happiness = self.happiness_value(x, y, self.space[x, y])
+
+        x0, y0 = x, y
+        for i in range(min(len(self.open_spaces), self.q)):
+            h = self.happiness_value(self.open_spaces[i][0], self.open_spaces[i][1], self.space[x, y])
+            if h > cur_happiness:
+                cur_happiness = h
+                x0, y0 = self.open_spaces[i][0], self.open_spaces[i][1]
+        # If none make it happier, 
+        if x0 == x and y0 == y:
+            return self.open_spaces[random.randint(0, len(self.open_spaces)-1)]
+            
+        return x0, y0
 
     def total_happiness(self):
         total = 0
@@ -255,13 +289,15 @@ class Schelling():
 if __name__ == "__main__":
 
     epochs = 25
-    iterations = 30
+    iterations = 1
 
-    s = Schelling(N=20, k=4, epochs=epochs, iterations=iterations)
+    s = Schelling(N=10, k=4, epochs=epochs, iterations=iterations)
     print("Simulating...")
 
     print("Random...")
+    s.images = True
     s.random_move()
+    quit()
 
     labels = ["Random"]
 
