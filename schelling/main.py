@@ -158,6 +158,11 @@ class Schelling():
 
     def social_network(self, n=5, p=3, epochs=100):
         happiness_values = []
+        
+        # p = size of square neighborhood to look at
+        self.p = p
+        # n = number of friends
+        self.n = n
 
         for _ in range(self.iterations):
             self.initialize_space()
@@ -165,11 +170,6 @@ class Schelling():
             # First find each agents "friends", randomly. This will be stored in a dictionary
             # this will require a lot of re-writing, but first thing that came to mind
             self.friends = {}
-            
-            # p = size of square neighborhood to look at
-            self.p = p
-            # n = number of friends
-            self.n = n
 
             for i in range(self.N):
                 for j in range(self.N):
@@ -253,15 +253,120 @@ class Schelling():
 
     def sean_kane(self):
         # Sean Kane's choice policy
-        pass
+        for _ in range(self.iterations):
+            # Start by creating a new starting space
+            self.initialize_space()
+            
+
+            happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
+            for _ in range(epochs):
+                for i in range(self.N):
+                    for j in range(self.N):
+                        # Here is where your algorithm goes, this iterates through the list in order from top left to bottom right so you may want to change that
+                        # The 'for _ in range(epochs):' should stay, that makes through it goes through the same number of epochs each time
+
+                        # TODO: insert code
+
+                        pass
+
+                        
+                        
+                if self.print_statements: print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness()/self.population)
+            
+            happiness_values.append(happiness_temp)
+            # Save the image of the final neighborhood if this switch is on
+            if self.images: self.space_to_image()
+
+        # This goes through calculating the average happiness at each epoch, leave this alone.
+        temp = []
+        for i in range(self.epochs):
+            t = 0
+            for j in range(self.iterations):
+                t += happiness_values[j][i]
+            temp.append(t / self.iterations)
+
+        self.happiness_ts.append(temp)
+        
+        if self.images: self.space_to_image()
 
     def bayley_king(self):
         # Bayley's choice policy
-        pass
+        for _ in range(self.iterations):
+            # Start by creating a new starting space
+            self.initialize_space()
+            
+
+            happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
+            for _ in range(epochs):
+                for i in range(self.N):
+                    for j in range(self.N):
+                        # Here is where your algorithm goes, this iterates through the list in order from top left to bottom right so you may want to change that
+                        # The 'for _ in range(epochs):' should stay, that makes through it goes through the same number of epochs each time
+
+                        # TODO: insert code
+
+                        pass
+
+                        
+                        
+                if self.print_statements: print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness()/self.population)
+            
+            happiness_values.append(happiness_temp)
+            # Save the image of the final neighborhood if this switch is on
+            if self.images: self.space_to_image()
+
+        # This goes through calculating the average happiness at each epoch, leave this alone.
+        temp = []
+        for i in range(self.epochs):
+            t = 0
+            for j in range(self.iterations):
+                t += happiness_values[j][i]
+            temp.append(t / self.iterations)
+
+        self.happiness_ts.append(temp)
+        
+        if self.images: self.space_to_image()
 
     def sean_rice(self):
         # Sean Rice's choice policy
-        pass
+        for _ in range(self.iterations):
+            # Start by creating a new starting space
+            self.initialize_space()
+            
+
+            happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
+            for _ in range(epochs):
+                for i in range(self.N):
+                    for j in range(self.N):
+                        # Here is where your algorithm goes, this iterates through the list in order from top left to bottom right so you may want to change that
+                        # The 'for _ in range(epochs):' should stay, that makes through it goes through the same number of epochs each time
+
+                        # TODO: insert code
+
+                        pass
+
+                        
+                        
+                if self.print_statements: print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness()/self.population)
+            
+            happiness_values.append(happiness_temp)
+            # Save the image of the final neighborhood if this switch is on
+            if self.images: self.space_to_image()
+
+        # This goes through calculating the average happiness at each epoch, leave this alone.
+        temp = []
+        for i in range(self.epochs):
+            t = 0
+            for j in range(self.iterations):
+                t += happiness_values[j][i]
+            temp.append(t / self.iterations)
+
+        self.happiness_ts.append(temp)
+        
+        if self.images: self.space_to_image()
 
     def space_to_image(self):
         im = np.zeros((self.N, self.N, 3), dtype=np.uint8)
