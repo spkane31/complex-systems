@@ -252,6 +252,7 @@ class Schelling():
         return locs
 
     def sean_kane(self):
+        happiness_values = []
         # Sean Kane's choice policy
         for _ in range(self.iterations):
             # Start by creating a new starting space
@@ -291,6 +292,7 @@ class Schelling():
         if self.images: self.space_to_image()
 
     def bayley_king(self):
+        happiness_values = []
         # Bayley's choice policy
         for _ in range(self.iterations):
             # Start by creating a new starting space
@@ -330,6 +332,7 @@ class Schelling():
         if self.images: self.space_to_image()
 
     def sean_rice(self):
+        happiness_values = []
         # Sean Rice's choice policy
         for _ in range(self.iterations):
             # Start by creating a new starting space
@@ -398,7 +401,9 @@ if __name__ == "__main__":
     print("Simulating...")
 
     print("Random...")
+    start = time.time()
     s.random_move()
+    print(f"Execution time: {round(time.time() - start, 2)} seconds")
 
     labels = ["Random"]
 
@@ -415,6 +420,13 @@ if __name__ == "__main__":
             print(f"Execution time: {round(time.time() - start, 2)} seconds")
             labels.append(f"n={n}, p={p}")
 
+    # s.sean_kane()
+    # s.bayley_king()
+    # s.sean_rice()
+    # labels.append("Sean Kane")
+    # labels.append("Bayley King")
+    # labels.append("Sean Rice")
+
     for (i, h) in enumerate(s.happiness_ts):
         ax.plot(x, h, label=labels[i])
     
@@ -423,9 +435,10 @@ if __name__ == "__main__":
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width*0.6, chartBox.height])
     ax.legend(loc='upper center', bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
-    plt.show()
     
     filename = f"{datetime.datetime.now()}-timeseries-happiness.png"
     plt.savefig(filename)
+
+    plt.show()
 
     print("Completed")
