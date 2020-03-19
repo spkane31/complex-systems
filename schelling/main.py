@@ -393,6 +393,9 @@ class Schelling():
         img.save(file_name+ ".png")
 
 if __name__ == "__main__":
+    # If you only want to test your algorithm out and skip everything, comment out everything from the 'print("Random...")' to the s.<your_name> line. 
+    # If you want to compare to the others keep that in and you'll get a graphic at the end showing the happiness over the timeseries. This takes
+    # a while to complete so you probably want to lower epochs and iterations when you're comparing. 
 
     epochs = 30
     iterations = 30
