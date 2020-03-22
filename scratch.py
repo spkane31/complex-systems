@@ -118,7 +118,7 @@ for i in range(iterations):
         if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.selfBest):
             # Update personal best
             particle.selfBest = particle.currentPos
-        # Part 2: If personal best is less than global best,
+        # Part 2: If current pos is less than global best,
         if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.globalBest):
             updateGlobal(particle.currentPos,swarm)
             # Update global best
