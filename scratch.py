@@ -5,6 +5,7 @@ import timeit
 import random
 import numpy as np
 import fit
+from params import *
 np.set_printoptions(precision=3)
 
 def clear():
@@ -79,74 +80,73 @@ def randomInit():
     y = np.random.random()*5.8
     return x,y
 
-##################################################################
-w = 0.9 # Inertia
-C =  0.1 # Cognitive Potential
-S =  0.3 # Social Potential 
-#S2 = 0.2 # Local Social Potential
-ub = [5.8, 5.8]
-lb = [-5.8, -5.8]
+def printParts(swarm):
+    [particle.printVals() for particle in swarm]
 
-
-swarmNames = ['P1','P2','P3','P4','P5','P6','P7','P8','P9','P10']
-swarm = []
-
-for name in swarmNames:
-    x,y = randomInit()
-    swarm.append(Particle([x,y],name))
-
-bestG = 9999
-
-for particle in swarm:
-    if fit.rastrigin(particle.currentPos) < bestG:
-        # Update personal best
-        bestG = fit.rastrigin(particle.currentPos)
-        loc = particle.currentPos
-updateGlobal(loc,swarm)
-
-for particle in swarm:
-    particle.printVals()
-
-
-start = timeit.default_timer()
-iterations = 10000
-for i in range(iterations):
+def updateGlobal(swarm,pos):
     for particle in swarm:
-        #if i == 0 or i == 100 or i == 1000 or i == 5000:
-        #    particle.printPos()
-        # Part 1: If current position is less than the personal best,
-        if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.selfBest):
-            # Update personal best
-            particle.selfBest = particle.currentPos
-        # Part 2: If current pos is less than global best,
-        if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.globalBest):
-            updateGlobal(particle.currentPos,swarm)
-            # Update global best
-        # Part 3: If personal best is less than local best,
-        if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.localBest):
-            # Update global best
-            particle.localBest = particle.currentPos
-        # Part 4: Update velocity and position matrices
-        update_velocity(particle)
-        update_position(particle)
-        #if i % 50== 0:
-        #    print('Iterations:',i)            
-        #    particle.printVals()
+        particle.globalBest = pos
 
-        #if i == iterations-1:
-            #sleep(1)
-        #    particle.printVals()
 
-stop = timeit.default_timer()
-print('##################################')
-bestVal = 9999
-for particle in swarm:
-    #particle.printVals()
-    particle.printPos()
-    if fit.rastrigin(particle.currentPos) <= bestVal:
-        bestVal = fit.rastrigin(particle.currentPos)
-        best = particle
-print('W:',w,'\tC:',C,'\tS:',S)
-#best.printPos()
-print('Time to run: {0:.3f}'.format(stop - start))
-#####################################################
+def main():
+    # particle initialization
+    for name in swarmNames:
+        x,y = randomInit()
+        swarm.append(Particle([x,y],name))
+    
+    # finds the best position from the init particle locations
+    bestG = 9999
+    for particle in swarm:
+        if fit.rastrigin(particle.currentPos) < bestG:
+           loc = particle.currentPos
+           bestG = fit.rastrigin(particle.currentPos)
+    updateGlobal(swarm,loc)
+
+    printParts(swarm) # [particle.printVals() for particle in swarm] # prints particles
+
+
+    start = timeit.default_timer()
+    iterations = 10000
+    for i in range(iterations):
+        for particle in swarm:
+            #if i == 0 or i == 100 or i == 1000 or i == 5000:
+            #    particle.printPos()
+            # Part 1: If current position is less than the personal best,
+            if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.selfBest):
+                # Update personal best
+                particle.selfBest = particle.currentPos
+            # Part 2: If current pos is less than global best,
+            if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.globalBest):
+                updateGlobal(swarm,particle.currentPos)
+                # Update global best
+            # Part 3: If personal best is less than local best,
+            if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.localBest):
+                # Update global best
+                particle.localBest = particle.currentPos
+            # Part 4: Update velocity and position matrices
+            update_velocity(particle)
+            update_position(particle)
+            #if i % 50== 0:
+            #    print('Iterations:',i)            
+            #    particle.printVals()
+
+            #if i == iterations-1:
+                #sleep(1)
+            #    particle.printVals()
+
+    stop = timeit.default_timer()
+    print('##################################')
+    bestVal = 9999
+    for particle in swarm:
+        #particle.printVals()
+        particle.printPos()
+        if fit.rastrigin(particle.currentPos) <= bestVal:
+            bestVal = fit.rastrigin(particle.currentPos)
+            best = particle
+    print('W:',w,'\tC:',C,'\tS:',S)
+    #best.printPos()
+    print('Time to run: {0:.3f}'.format(stop - start))
+    #####################################################
+
+if __name__ == "__main__":
+    main()
