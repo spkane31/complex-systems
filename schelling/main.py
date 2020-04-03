@@ -352,8 +352,6 @@ class Schelling():
                         # TODO: insert code
 
                         pass
-
-                        
                         
                 if self.print_statements: print(self.total_happiness() / self.population)
                 happiness_temp.append(self.total_happiness()/self.population)
@@ -422,7 +420,7 @@ def process_arguments() -> argparse.Namespace:
 
     # set all run settings to true if run_all was specified
     if args.run_all == True:
-        args_dict = vars(n)
+        args_dict = vars(args)
         for run_arg in [k for k in args_dict.keys() if k.startswith("run_")]:
             args_dict[run_arg] = True
 
@@ -430,10 +428,6 @@ def process_arguments() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    # If you only want to test your algorithm out and skip everything, comment out everything from the 'print("Random...")' to the s.<your_name> line. 
-    # If you want to compare to the others keep that in and you'll get a graphic at the end showing the happiness over the timeseries. This takes
-    # a while to complete so you probably want to lower epochs and iterations when you're comparing. 
-
     args = process_arguments()
 
     epochs = args.epochs
@@ -473,8 +467,12 @@ if __name__ == "__main__":
         
     if args.run_rice:
         print(f"  Sean Rice")
-        s.sean_rice()
-        labels.append("Sean Rice")
+        try:
+            s.sean_rice()
+            labels.append("Sean Rice")
+        except NotImplementedError: 
+            # nobody cares
+            pass
         print(f"    Execution time: {round(time.time() - start, 2)} seconds")
 
     fig = plt.figure()
