@@ -2,12 +2,14 @@
 # Due: March 31, 2020
 # Sean Kane, Bayley King, Sean Rice
 
-import numpy as np
-import random
-from PIL import Image
-import matplotlib.pyplot as plt
+import argparse
 import datetime
+import random
 import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
 
 class Schelling():
 
@@ -380,6 +382,7 @@ class Schelling():
         if self.images: self.space_to_image()
 
     def sean_rice(self):
+        raise NotImplementedError("i haven't done this yet")
         happiness_values = []
         # Sean Rice's choice policy
         for _ in range(self.iterations):
@@ -400,8 +403,6 @@ class Schelling():
                         # TODO: insert code
 
                         pass
-
-                        
                         
                 if self.print_statements: print(self.total_happiness() / self.population)
                 happiness_temp.append(self.total_happiness()/self.population)
@@ -443,26 +444,96 @@ class Schelling():
         file_name += f"_k={self.k}_N={self.N}_epochs={self.epochs}"
         img.save(file_name+ ".png")
 
-if __name__ == "__main__":
-    # If you only want to test your algorithm out and skip everything, comment out everything from the 'print("Random...")' to the s.<your_name> line. 
-    # If you want to compare to the others keep that in and you'll get a graphic at the end showing the happiness over the timeseries. This takes
-    # a while to complete so you probably want to lower epochs and iterations when you're comparing. 
+def get_argparser() -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-e", "--epochs", action="store", type=int, default=30, help="the number of epochs to run. default: %(default)s")
+    ap.add_argument("-i", "--iterations", action="store", type=int, default=32, help="the number of iterations to run. default: %(default)s")
+    ap.add_argument("--show", action="store", type=bool, default=False, help="show the final plot after program has run.")
 
+    ap.add_argument("--all", action="store_true", required=False, dest="run_all", help="run all variants. overrides other choices. default: True if no other run options are given, else False")
+    ap.add_argument("--random", action="store_true", required=False, dest="run_random", help="run the random policy. default: %(default)s")
+    ap.add_argument("--social", action="store_true", required=False, dest="run_social", help="run the social policy. default: %(default)s")
+    ap.add_argument("--kane", action="store_true", required=False, dest="run_kane",help="run sean kane's policy. default: %(default)s")
+    ap.add_argument("--king", action="store_true", required=False, dest="run_king",help="run bayley king's policy. default: %(default)s")
+    ap.add_argument("--rice", action="store_true", required=False, dest="run_rice",help="run sean rice's policy. default: %(default)s")
+    return ap
+
+def process_arguments() -> argparse.Namespace:
+    args = get_argparser().parse_args()
+
+    # if no selections are made, run all by default
+    none_selected = not any(
+        [arg_setting
+        for arg_name, arg_setting in vars(args).items()
+        if arg_name.startswith("run_")]
+    )
+    args.run_all |= none_selected
+
+    # set all run settings to true if run_all was specified
+    if args.run_all == True:
+        args_dict = vars(args)
+        for run_arg in [k for k in args_dict.keys() if k.startswith("run_")]:
+            args_dict[run_arg] = True
+
+    return args
+
+
+if __name__ == "__main__":
+    args = process_arguments()
+
+<<<<<<< HEAD
     epochs = 10
     iterations = 30
+=======
+    epochs = args.epochs
+    iterations = args.iterations
+    labels = []
+>>>>>>> ed2afa467bc904729596516a8a2a4f18b7291b86
 
     s = Schelling(N=40, k=4, epochs=epochs, iterations=iterations)
     print("Simulating...")
 
-    print("Random...")
-    start = time.time()
-    s.random_move()
-    print(f"Execution time: {round(time.time() - start, 2)} seconds")
+    if args.run_random:
+        print("  Random")
+        start = time.time()
+        s.random_move()
+        labels.append("Random")
+        print(f"    Execution time: {round(time.time() - start, 2)} seconds")
+    
+    if args.run_social:
+        for n in [5, 10, 20]:
+            for p in [3, 5, 7]:
+                print(f"  Social (n={n}, p={p})")
+                start = time.time()
+                s.social_network(n=n, p=p, epochs=epochs)
+                labels.append(f"Social (n={n}, p={p})")
+                print(f"    Execution time: {round(time.time() - start, 2)} seconds")
 
-    labels = ["Random"]
+    if args.run_kane:
+        print(f"  Sean Kane")
+        start = time.time()
+        s.sean_kane()
+        labels.append("Sean Kane")
+        print(f"    Execution time: {round(time.time() - start, 2)} seconds")
+    if args.run_king:
+        print(f"  Bayley King")
+        s.bayley_king()
+        labels.append("Bayley King")
+        print(f"    Execution time: {round(time.time() - start, 2)} seconds")
+        
+    if args.run_rice:
+        print(f"  Sean Rice")
+        try:
+            s.sean_rice()
+            labels.append("Sean Rice")
+        except NotImplementedError: 
+            # nobody cares
+            pass
+        print(f"    Execution time: {round(time.time() - start, 2)} seconds")
 
     fig = plt.figure()
     ax = plt.subplot(111)
+<<<<<<< HEAD
 
     x = [int(i+1) for i in range(epochs)]
     
@@ -481,8 +552,11 @@ if __name__ == "__main__":
     # labels.append("Bayley King")
     # labels.append("Sean Rice")
 
+=======
+    x_axis = list(range(1, epochs+1))
+>>>>>>> ed2afa467bc904729596516a8a2a4f18b7291b86
     for (i, h) in enumerate(s.happiness_ts):
-        ax.plot(x, h, label=labels[i])
+        ax.plot(x_axis, h, label=labels[i])
     
     plt.xlabel('Epochs')
     plt.ylabel('Happiness')
@@ -490,9 +564,11 @@ if __name__ == "__main__":
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width*0.6, chartBox.height])
     ax.legend(loc='upper center', bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
     
-    filename = f"{datetime.datetime.now()}-timeseries-happiness.png"
+    time_str = datetime.datetime.now().isoformat(sep="_").replace(":", ";")
+    filename = f"{time_str}-timeseries-happiness.png"
     plt.savefig(filename)
 
-    plt.show()
+    if args.show:
+        plt.show()
 
     print("Completed")
