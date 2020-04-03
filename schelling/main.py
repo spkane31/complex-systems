@@ -71,6 +71,9 @@ class Schelling():
             x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
 
             for _ in range(self.epochs):
+                if self.print_statements: print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness()/self.population)
+
                 for i in range(self.N):
                     for j in range(self.N):
                         x0, y0 = (x + i) % self.N, (y + j) % self.N
@@ -185,6 +188,9 @@ class Schelling():
             
             happiness_temp = []
             for _ in range(epochs):
+                if self.print_statements: print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness()/self.population)
+
                 for i in range(self.N):
                     for j in range(self.N):
 
@@ -253,30 +259,69 @@ class Schelling():
 
         return locs
 
-    def sean_kane(self):
+    def euc_dist(self, a, b):
+        ax, ay = a
+        bx, by = b
+        return ((ax - bx) ** 2 + (ay - by) ** 2) ** 0.5
+
+    def sean_kane(self, distance=None, n=5, p=3):
+        self.n = n
+        self.p = p
+        
+        if not distance:
+            distance = int(self.N/4)
+        else:
+            distance = min(distance, self.N/4)
+
         happiness_values = []
         # Sean Kane's choice policy
         for _ in range(self.iterations):
             # Start by creating a new starting space
             self.initialize_space()
+
+            # Find "friends" randomly, except they have to be the same "type" and less than or equal
+            # to distance from each other. Each agent has 5 friends.
+            self.friends = {}
+            for i in range(self.N):
+                for j in range(self.N):
+                    if self.space[i, j] != 0:
+                        temp = []
+                        while len(temp) < n:
+                            x, y = self.get_random_pt()
+                            if (x, y) not in temp and self.space[x, y] == self.space[i, j] and self.euc_dist((i, j), (x, y)) < distance:
+                                temp.append((x, y))
+                        self.friends[(i, j)] = temp
+
             
 
             happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
             for _ in range(epochs):
+                if self.print_statements: print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness()/self.population)
+
                 for i in range(self.N):
                     for j in range(self.N):
                         # Here is where your algorithm goes, this iterates through the list in order from top left to bottom right so you may want to change that
                         # The 'for _ in range(epochs):' should stay, that makes through it goes through the same number of epochs each time
 
                         # TODO: insert code
+                        if self.happiness(i, j) < 0.25 and self.space[i, j] != 0:
+                            locations = self.ask_friends(i, j)
 
-                        pass
+                            if len(locations) > 0:
+                                new_loc = locations[random.randint(0, len(locations)-1)]
+                                self.friends[new_loc] = self.friends[(i, j)]
+                                self.friends[(i, j)] = []
 
-                        
-                        
-                if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
+                                self.space[new_loc[0], new_loc[1]] = self.space[i, j]
+                                self.space[i, j] = 0
+                            else:
+                                # Do nothing if the friends can't find a better place
+                                pass
             
+            if self.print_statements: print(self.total_happiness() / self.population)
+            happiness_temp.append(self.total_happiness()/self.population)
+
             happiness_values.append(happiness_temp)
             # Save the image of the final neighborhood if this switch is on
             if self.images: self.space_to_image()
@@ -303,6 +348,9 @@ class Schelling():
 
             happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
             for _ in range(epochs):
+                if self.print_statements: print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness()/self.population)
+
                 for i in range(self.N):
                     for j in range(self.N):
                         # Here is where your algorithm goes, this iterates through the list in order from top left to bottom right so you may want to change that
@@ -344,6 +392,9 @@ class Schelling():
 
             happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
             for _ in range(epochs):
+                if self.print_statements: print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness()/self.population)
+
                 for i in range(self.N):
                     for j in range(self.N):
                         # Here is where your algorithm goes, this iterates through the list in order from top left to bottom right so you may want to change that
@@ -430,9 +481,14 @@ def process_arguments() -> argparse.Namespace:
 if __name__ == "__main__":
     args = process_arguments()
 
+<<<<<<< HEAD
+    epochs = 10
+    iterations = 30
+=======
     epochs = args.epochs
     iterations = args.iterations
     labels = []
+>>>>>>> ed2afa467bc904729596516a8a2a4f18b7291b86
 
     s = Schelling(N=40, k=4, epochs=epochs, iterations=iterations)
     print("Simulating...")
@@ -477,7 +533,28 @@ if __name__ == "__main__":
 
     fig = plt.figure()
     ax = plt.subplot(111)
+<<<<<<< HEAD
+
+    x = [int(i+1) for i in range(epochs)]
+    
+    for n in [5, 10, 20]:
+        for p in [3, 5, 7]:
+            print(f"n={n}\tp={p}")
+            start = time.time()
+            s.social_network(n=n, p=p, epochs=epochs)
+            print(f"Execution time: {round(time.time() - start, 2)} seconds")
+            labels.append(f"n={n}, p={p}")
+
+    s.sean_kane()
+    labels.append("Sean Kane")
+    # s.bayley_king()
+    # s.sean_rice()
+    # labels.append("Bayley King")
+    # labels.append("Sean Rice")
+
+=======
     x_axis = list(range(1, epochs+1))
+>>>>>>> ed2afa467bc904729596516a8a2a4f18b7291b86
     for (i, h) in enumerate(s.happiness_ts):
         ax.plot(x_axis, h, label=labels[i])
     
