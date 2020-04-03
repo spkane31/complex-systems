@@ -481,14 +481,9 @@ def process_arguments() -> argparse.Namespace:
 if __name__ == "__main__":
     args = process_arguments()
 
-<<<<<<< HEAD
-    epochs = 10
-    iterations = 30
-=======
     epochs = args.epochs
     iterations = args.iterations
     labels = []
->>>>>>> ed2afa467bc904729596516a8a2a4f18b7291b86
 
     s = Schelling(N=40, k=4, epochs=epochs, iterations=iterations)
     print("Simulating...")
@@ -533,28 +528,8 @@ if __name__ == "__main__":
 
     fig = plt.figure()
     ax = plt.subplot(111)
-<<<<<<< HEAD
 
-    x = [int(i+1) for i in range(epochs)]
-    
-    for n in [5, 10, 20]:
-        for p in [3, 5, 7]:
-            print(f"n={n}\tp={p}")
-            start = time.time()
-            s.social_network(n=n, p=p, epochs=epochs)
-            print(f"Execution time: {round(time.time() - start, 2)} seconds")
-            labels.append(f"n={n}, p={p}")
-
-    s.sean_kane()
-    labels.append("Sean Kane")
-    # s.bayley_king()
-    # s.sean_rice()
-    # labels.append("Bayley King")
-    # labels.append("Sean Rice")
-
-=======
     x_axis = list(range(1, epochs+1))
->>>>>>> ed2afa467bc904729596516a8a2a4f18b7291b86
     for (i, h) in enumerate(s.happiness_ts):
         ax.plot(x_axis, h, label=labels[i])
     
