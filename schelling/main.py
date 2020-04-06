@@ -71,9 +71,9 @@ class Schelling():
             # Find a random starting point and iterate from there
             x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
 
-            for _ in range(self.epochs):
+            for e in range(self.epochs):
                 if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
+                if e == 0: happiness_temp.append(self.total_happiness()/self.population)
 
                 valid_locations = []
                 for i in range(self.N):
@@ -198,9 +198,9 @@ class Schelling():
                         self.friends[(i, j)] = temp
             
             happiness_temp = []
-            for _ in range(epochs):
+            for e in range(epochs):
                 if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
+                if e == 0: happiness_temp.append(self.total_happiness()/self.population)
 
                 for i in range(self.N):
                     for j in range(self.N):
@@ -311,9 +311,9 @@ class Schelling():
             
 
             happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
-            for _ in range(epochs):
+            for e in range(epochs):
                 if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
+                if e == 0: happiness_temp.append(self.total_happiness()/self.population)
 
                 for i in range(self.N):
                     for j in range(self.N):
@@ -335,9 +335,9 @@ class Schelling():
                                 # Do nothing if the friends can't find a better place
                                 pass
             
-            if self.print_statements: print(self.total_happiness() / self.population)
-            happiness_temp.append(self.total_happiness()/self.population)
-
+                if self.print_statements: print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness()/self.population)
+                
             happiness_values.append(happiness_temp)
             # Save the image of the final neighborhood if this switch is on
             if self.images: self.space_to_image()
@@ -352,7 +352,7 @@ class Schelling():
                 t += happiness_values[j][i]
                 vals.append(happiness_values[j][i])
             temp.append(t / self.iterations)
-            stddev.append(statistics.stdev(vals))
+            # stddev.append(statistics.stdev(vals))
 
         self.happiness_ts.append(temp)
         print(f"kane")
@@ -507,7 +507,7 @@ if __name__ == "__main__":
     iterations = args.iterations
     labels = []
 
-    s = Schelling(N=100, k=4, epochs=epochs, iterations=iterations)
+    s = Schelling(N=40, k=4, epochs=epochs, iterations=iterations)
     print("Simulating...")
 
     if args.run_random:
