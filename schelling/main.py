@@ -12,9 +12,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-class Schelling():
 
-    def __init__(self, N=40, q=100, k=4, epochs=50, iterations=30):
+class Schelling:
+    def __init__(
+        self,
+        N=40,
+        q=100,
+        k=4,
+        epochs=50,
+        iterations=30,
+        print_statements=False,
+        save_images=False,
+    ):
         self.N = N
         self.population = int(N * N * 0.90)
 
@@ -27,8 +36,8 @@ class Schelling():
         self.k = k
         self.epochs = epochs
 
-        self.print_statements = False
-        self.images = False
+        self.print_statements = print_statements
+        self.images = save_images
 
         # Timeseries of happiness values
         self.happiness_ts = []
@@ -39,18 +48,18 @@ class Schelling():
     def initialize_space(self):
         self.space = np.zeros((self.N, self.N), dtype=int)
         # randomly initialize the locations
-        for _ in range(int(self.population/2)):
+        for _ in range(int(self.population / 2)):
             # first with +1's
-            x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
+            x, y = random.randint(0, self.N - 1), random.randint(0, self.N - 1)
             while self.space[x][y] != 0:
-                x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
+                x, y = random.randint(0, self.N - 1), random.randint(0, self.N - 1)
             self.space[x][y] = 1
-            
-        for _ in range(int(self.population/2)):
+
+        for _ in range(int(self.population / 2)):
             # second with -1's
-            x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
+            x, y = random.randint(0, self.N - 1), random.randint(0, self.N - 1)
             while self.space[x][y] != 0:
-                x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
+                x, y = random.randint(0, self.N - 1), random.randint(0, self.N - 1)
             self.space[x][y] = -1
 
         for i in range(self.N):
@@ -59,7 +68,7 @@ class Schelling():
                     self.open_spaces.append((i, j))
 
     def get_random_pt(self):
-        return random.randint(0, self.N-1), random.randint(0, self.N-1)
+        return random.randint(0, self.N - 1), random.randint(0, self.N - 1)
 
     def random_move(self):
         happiness_values = []
@@ -69,11 +78,12 @@ class Schelling():
             # How to move each object in a random order? Could start at a different place each time
             happiness_temp = []
             # Find a random starting point and iterate from there
-            x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
+            x, y = random.randint(0, self.N - 1), random.randint(0, self.N - 1)
 
             for e in range(self.epochs):
-                if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
+                if self.print_statements:
+                    print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness() / self.population)
 
                 for i in range(self.N):
                     for j in range(self.N):
@@ -83,7 +93,7 @@ class Schelling():
                         if h == 0:
                             # If the agent is unhappy update that position
                             x1, y1 = self.find_random_open(x0, y0)
-                            
+
                             self.space[x1, y1] = self.space[x0, y0]
                             self.space[x0, y0] = 0
                             self.open_spaces.remove((x1, y1))
@@ -93,13 +103,15 @@ class Schelling():
                 # Scenario where everyone is happy
                 if t_h == self.population:
                     # auto-fill happiness-over-epochs; won't change anymore
-                    happiness_temp += [t_h/self.population] * (self.epochs - e)
+                    happiness_temp += [t_h / self.population] * (self.epochs - e)
                     # stop simulating this iteration
                     break
-                
-                if self.print_statements: print(t_h / self.population)
-                happiness_temp.append(t_h/self.population)
-            if self.images: self.space_to_image()
+
+                if self.print_statements:
+                    print(t_h / self.population)
+                happiness_temp.append(t_h / self.population)
+            if self.images:
+                self.space_to_image()
             # Produce timeseries for the happiness
             happiness_values.append(happiness_temp)
         temp = []
@@ -110,31 +122,26 @@ class Schelling():
             temp.append(t / self.iterations)
 
         self.happiness_ts.append(temp)
-        
+
         pass
-    
+
     @staticmethod
-    def count_neighbors_of_tribe(
-        space: np.ndarray,
-        x: int,
-        y: int,
-        tribe: int
-    ) -> int:
+    def count_neighbors_of_tribe(space: np.ndarray, x: int, y: int, tribe: int) -> int:
         sx, sy = space.shape
         # 8-neighborhood with periodic boundary conditions
         neighbors = (
-            ((x+ox) % sx, (y+oy) % sy)
-            for ox in (-1,0,1) for oy in (-1,0,1)
-            if ox != 0 or oy != 0 # don't include self
+            ((x + ox) % sx, (y + oy) % sy)
+            for ox in (-1, 0, 1)
+            for oy in (-1, 0, 1)
+            if ox != 0 or oy != 0  # don't include self
         )
-        count = sum(1 if space[nx,ny]==tribe else 0 for (nx,ny) in neighbors)
+        count = sum(1 if space[nx, ny] == tribe else 0 for (nx, ny) in neighbors)
         return count
-    
+
     def happiness(self, x, y, tribe=None):
-        tribe = self.space[x,y] if tribe is None else tribe
+        tribe = self.space[x, y] if tribe is None else tribe
         n_same = self.count_neighbors_of_tribe(self.space, x, y, tribe)
         return 1 if n_same >= self.k else 0
-
 
     def __happiness_old(self, x, y):
         # Calculate whether an agent is happy at it's own location
@@ -145,7 +152,7 @@ class Schelling():
             for j in range(-1, 2, 1):
                 x0, y0 = (x + i) % self.N, (y + j) % self.N
                 total += self.space[x0, y0]
-                
+
         # returns 1 if the cell is "happy", 0 otherwise
         if total >= self.k and self.space[x, y] == 1:
             return 1
@@ -171,14 +178,16 @@ class Schelling():
 
         x0, y0 = x, y
         for i in range(min(len(self.open_spaces), self.q)):
-            h = self.happiness_value(self.open_spaces[i][0], self.open_spaces[i][1], self.space[x, y])
+            h = self.happiness_value(
+                self.open_spaces[i][0], self.open_spaces[i][1], self.space[x, y]
+            )
             if h > cur_happiness:
                 cur_happiness = h
                 x0, y0 = self.open_spaces[i][0], self.open_spaces[i][1]
-        # If none make it happier, 
+        # If none make it happier,
         if x0 == x and y0 == y:
-            return self.open_spaces[random.randint(0, len(self.open_spaces)-1)]
-            
+            return self.open_spaces[random.randint(0, len(self.open_spaces) - 1)]
+
         return x0, y0
 
     def total_happiness(self):
@@ -190,7 +199,7 @@ class Schelling():
 
     def social_network(self, n=5, p=3, epochs=100):
         happiness_values = []
-        
+
         # p = size of square neighborhood to look at
         self.p = p
         # n = number of friends
@@ -198,7 +207,7 @@ class Schelling():
 
         for _ in range(self.iterations):
             self.initialize_space()
-            
+
             # First find each agents "friends", randomly. This will be stored in a dictionary
             # this will require a lot of re-writing, but first thing that came to mind
             self.friends = {}
@@ -209,14 +218,15 @@ class Schelling():
                         temp = []
                         while len(temp) < n:
                             x, y = self.get_random_pt()
-                            if (x,y) not in temp:
+                            if (x, y) not in temp:
                                 temp.append((x, y))
                         self.friends[(i, j)] = temp
-            
+
             happiness_temp = []
             for _ in range(epochs):
-                if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
+                if self.print_statements:
+                    print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness() / self.population)
 
                 for i in range(self.N):
                     for j in range(self.N):
@@ -231,7 +241,9 @@ class Schelling():
                             locations = self.ask_friends(i, j)
                             # print(locations)
                             if len(locations) > 0:
-                                new_loc = locations[random.randint(0, len(locations)-1)]
+                                new_loc = locations[
+                                    random.randint(0, len(locations) - 1)
+                                ]
                             else:
                                 x, y = self.get_random_pt()
                                 while self.space[x, y] != 0:
@@ -250,11 +262,13 @@ class Schelling():
                             # print(self.space)
 
                             # quit()
-                if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
-            
+                if self.print_statements:
+                    print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness() / self.population)
+
             happiness_values.append(happiness_temp)
-            if self.images: self.space_to_image()
+            if self.images:
+                self.space_to_image()
 
         temp = []
         for i in range(self.epochs):
@@ -264,8 +278,9 @@ class Schelling():
             temp.append(t / self.iterations)
 
         self.happiness_ts.append(temp)
-        
-        if self.images: self.space_to_image()
+
+        if self.images:
+            self.space_to_image()
         pass
 
     def ask_friends(self, x, y):
@@ -274,8 +289,8 @@ class Schelling():
         locs = []
         for friend in f:
             x, y = friend
-            for i in range(-int(self.p/2), int((self.p+1)/2), 1):
-                for j in range(-int(self.p/2), int((self.p+1)/2), 1):
+            for i in range(-int(self.p / 2), int((self.p + 1) / 2), 1):
+                for j in range(-int(self.p / 2), int((self.p + 1) / 2), 1):
                     x0, y0 = (x + i) % self.N, (y + j) % self.N
                     if self.space[x0, y0] == 0:
                         h = self.happiness_value(x0, y0, self.space[x, y])
@@ -294,11 +309,11 @@ class Schelling():
     def sean_kane(self, distance=None, n=5, p=3):
         self.n = n
         self.p = p
-        
+
         if not distance:
-            distance = int(self.N/4)
+            distance = int(self.N / 4)
         else:
-            distance = min(distance, self.N/4)
+            distance = min(distance, self.N / 4)
 
         happiness_values = []
         # Sean Kane's choice policy
@@ -315,16 +330,21 @@ class Schelling():
                         temp = []
                         while len(temp) < n:
                             x, y = self.get_random_pt()
-                            if (x, y) not in temp and self.space[x, y] == self.space[i, j] and self.euc_dist((i, j), (x, y)) < distance:
+                            if (
+                                (x, y) not in temp
+                                and self.space[x, y] == self.space[i, j]
+                                and self.euc_dist((i, j), (x, y)) < distance
+                            ):
                                 temp.append((x, y))
                         self.friends[(i, j)] = temp
 
-            
-
-            happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
+            happiness_temp = (
+                []
+            )  # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
             for _ in range(epochs):
-                if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
+                if self.print_statements:
+                    print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness() / self.population)
 
                 for i in range(self.N):
                     for j in range(self.N):
@@ -336,7 +356,9 @@ class Schelling():
                             locations = self.ask_friends(i, j)
 
                             if len(locations) > 0:
-                                new_loc = locations[random.randint(0, len(locations)-1)]
+                                new_loc = locations[
+                                    random.randint(0, len(locations) - 1)
+                                ]
                                 self.friends[new_loc] = self.friends[(i, j)]
                                 self.friends[(i, j)] = []
 
@@ -345,13 +367,15 @@ class Schelling():
                             else:
                                 # Do nothing if the friends can't find a better place
                                 pass
-            
-            if self.print_statements: print(self.total_happiness() / self.population)
-            happiness_temp.append(self.total_happiness()/self.population)
+
+            if self.print_statements:
+                print(self.total_happiness() / self.population)
+            happiness_temp.append(self.total_happiness() / self.population)
 
             happiness_values.append(happiness_temp)
             # Save the image of the final neighborhood if this switch is on
-            if self.images: self.space_to_image()
+            if self.images:
+                self.space_to_image()
 
         # This goes through calculating the average happiness at each epoch, leave this alone.
         temp = []
@@ -362,8 +386,9 @@ class Schelling():
             temp.append(t / self.iterations)
 
         self.happiness_ts.append(temp)
-        
-        if self.images: self.space_to_image()
+
+        if self.images:
+            self.space_to_image()
 
     def bayley_king(self):
         happiness_values = []
@@ -371,12 +396,14 @@ class Schelling():
         for _ in range(self.iterations):
             # Start by creating a new starting space
             self.initialize_space()
-            
 
-            happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
+            happiness_temp = (
+                []
+            )  # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
             for _ in range(epochs):
-                if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
+                if self.print_statements:
+                    print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness() / self.population)
 
                 for i in range(self.N):
                     for j in range(self.N):
@@ -387,14 +414,14 @@ class Schelling():
 
                         pass
 
-                        
-                        
-                if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
-            
+                if self.print_statements:
+                    print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness() / self.population)
+
             happiness_values.append(happiness_temp)
             # Save the image of the final neighborhood if this switch is on
-            if self.images: self.space_to_image()
+            if self.images:
+                self.space_to_image()
 
         # This goes through calculating the average happiness at each epoch, leave this alone.
         temp = []
@@ -405,21 +432,25 @@ class Schelling():
             temp.append(t / self.iterations)
 
         self.happiness_ts.append(temp)
-        
-        if self.images: self.space_to_image()
 
-    def sean_rice(self, prop_of_others: float=0.75):
+        if self.images:
+            self.space_to_image()
+
+    def sean_rice(self, prop_of_others: float = 0.75):
         happiness_values = []
         # Sean Rice's choice policy
         for _ in range(self.iterations):
             # initial setup
             self.initialize_space()
-            happiness_temp = [] # Stores the happiness values at each epoch for each iteration
+            happiness_temp = (
+                []
+            )  # Stores the happiness values at each epoch for each iteration
 
             # get the list of nodes in a tribe (not spaces)
             nodes = [
                 (i, j)
-                for i in range(0, self.N) for j in range(0, self.N)
+                for i in range(0, self.N)
+                for j in range(0, self.N)
                 if self.space[i, j] != 0
             ]
             # define a mapping from the node's "name" (original location) to
@@ -433,15 +464,15 @@ class Schelling():
                 tribe = self.space[x, y]
                 nodes_of_tribe[tribe].append(node)
 
-            
             for _ in range(epochs):
-                if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
+                if self.print_statements:
+                    print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness() / self.population)
 
                 random.shuffle(nodes)
                 for node in nodes:
                     x, y = node_locations[node]
-                    tribe = self.space[x,y]
+                    tribe = self.space[x, y]
                     # if already happy, do nothing.
                     if self.happiness(x, y) == 1:
                         continue
@@ -451,8 +482,7 @@ class Schelling():
                     other_tribe = -1 * tribe
                     n_others = len(nodes_of_tribe[other_tribe])
                     others = random.sample(
-                        nodes_of_tribe[other_tribe],
-                        int(n_others * prop_of_others)
+                        nodes_of_tribe[other_tribe], int(n_others * prop_of_others)
                     )
                     already_done = False
                     for other in others:
@@ -490,23 +520,27 @@ class Schelling():
                             break
                         else:
                             # otherwise, track it if it's an improvement to our current best
-                            n_same = self.count_neighbors_of_tribe(self.space, sx, sy, tribe)
+                            n_same = self.count_neighbors_of_tribe(
+                                self.space, sx, sy, tribe
+                            )
                             if n_same > best_fail_n:
                                 best_fail_n = n_same
                                 best_space = space
-                    
+
                     self.space[sx, sy] = tribe
                     self.space[x, y] = 0
                     node_locations[node] = best_space
                     self.open_spaces.remove(best_space)
                     self.open_spaces.append((x, y))
-                
-                if self.print_statements: print(self.total_happiness() / self.population)
-                happiness_temp.append(self.total_happiness()/self.population)
-            
+
+                if self.print_statements:
+                    print(self.total_happiness() / self.population)
+                happiness_temp.append(self.total_happiness() / self.population)
+
             happiness_values.append(happiness_temp)
             # Save the image of the final neighborhood if this switch is on
-            if self.images: self.space_to_image()
+            if self.images:
+                self.space_to_image()
 
         # This goes through calculating the average happiness at each epoch, leave this alone.
         temp = []
@@ -517,8 +551,9 @@ class Schelling():
             temp.append(t / self.iterations)
 
         self.happiness_ts.append(temp)
-        
-        if self.images: self.space_to_image()
+
+        if self.images:
+            self.space_to_image()
 
     def space_to_image(self):
         im = np.zeros((self.N, self.N, 3), dtype=np.uint8)
@@ -534,16 +569,20 @@ class Schelling():
         # Want the image to be 512 x 512
         scale = 512 / (self.N)
 
-        img = Image.fromarray(im, 'RGB')
-        img = img.resize((round(img.size[0]*scale), round(img.size[1]*scale)), Image.NEAREST)
+        img = Image.fromarray(im, "RGB")
+        img = img.resize(
+            (round(img.size[0] * scale), round(img.size[1] * scale)), Image.NEAREST
+        )
 
         file_name = f"{datetime.datetime.now()}".split()[0]
         file_name += f"_k={self.k}_N={self.N}_epochs={self.epochs}"
         file_name = file_name.replace(":", ";")
-        img.save(file_name+ ".png")
+        img.save(file_name + ".png")
+
 
 def get_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser()
+    # fmt: off
     ap.add_argument("-e", "--epochs", action="store", type=int, default=30, help="the number of epochs to run. default: %(default)s")
     ap.add_argument("-i", "--iterations", action="store", type=int, default=32, help="the number of iterations to run. default: %(default)s")
     ap.add_argument("--show", action="store", type=bool, default=False, help="show the final plot after program has run.")
@@ -554,16 +593,20 @@ def get_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--kane", action="store_true", required=False, dest="run_kane",help="run sean kane's policy. default: %(default)s")
     ap.add_argument("--king", action="store_true", required=False, dest="run_king",help="run bayley king's policy. default: %(default)s")
     ap.add_argument("--rice", action="store_true", required=False, dest="run_rice",help="run sean rice's policy. default: %(default)s")
+    # fmt: on
     return ap
+
 
 def process_arguments() -> argparse.Namespace:
     args = get_argparser().parse_args()
 
     # if no selections are made, run all by default
     none_selected = not any(
-        [arg_setting
-        for arg_name, arg_setting in vars(args).items()
-        if arg_name.startswith("run_")]
+        [
+            arg_setting
+            for arg_name, arg_setting in vars(args).items()
+            if arg_name.startswith("run_")
+        ]
     )
     args.run_all |= none_selected
 
@@ -592,7 +635,7 @@ if __name__ == "__main__":
         s.random_move()
         labels.append("Random")
         print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-    
+
     if args.run_social:
         for n in [5, 10, 20]:
             for p in [3, 5, 7]:
@@ -613,7 +656,7 @@ if __name__ == "__main__":
         s.bayley_king()
         labels.append("Bayley King")
         print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-        
+
     if args.run_rice:
         print(f"  Sean Rice")
         s.sean_rice()
@@ -623,16 +666,16 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = plt.subplot(111)
 
-    x_axis = list(range(1, epochs+1))
+    x_axis = list(range(1, epochs + 1))
     for (i, h) in enumerate(s.happiness_ts):
         ax.plot(x_axis, h, label=labels[i])
-    
-    plt.xlabel('Epochs')
-    plt.ylabel('Happiness')
+
+    plt.xlabel("Epochs")
+    plt.ylabel("Happiness")
     chartBox = ax.get_position()
-    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width*0.6, chartBox.height])
-    ax.legend(loc='upper center', bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
-    
+    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.6, chartBox.height])
+    ax.legend(loc="upper center", bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
+
     time_str = datetime.datetime.now().isoformat(sep="_").replace(":", ";")
     filename = f"{time_str}-timeseries-happiness.png"
     plt.savefig(filename)
