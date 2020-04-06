@@ -111,7 +111,7 @@ class Schelling:
                     print(t_h / self.population)
                 happiness_temp.append(t_h / self.population)
             if self.images:
-                self.space_to_image()
+                self.space_to_image("random")
             # Produce timeseries for the happiness
             happiness_values.append(happiness_temp)
         temp = []
@@ -268,7 +268,7 @@ class Schelling:
 
             happiness_values.append(happiness_temp)
             if self.images:
-                self.space_to_image()
+                self.space_to_image("social-network")
 
         temp = []
         for i in range(self.epochs):
@@ -280,7 +280,7 @@ class Schelling:
         self.happiness_ts.append(temp)
 
         if self.images:
-            self.space_to_image()
+            self.space_to_image("social-network")
         pass
 
     def ask_friends(self, x, y):
@@ -375,7 +375,7 @@ class Schelling:
             happiness_values.append(happiness_temp)
             # Save the image of the final neighborhood if this switch is on
             if self.images:
-                self.space_to_image()
+                self.space_to_image("sean-kane")
 
         # This goes through calculating the average happiness at each epoch, leave this alone.
         temp = []
@@ -388,7 +388,7 @@ class Schelling:
         self.happiness_ts.append(temp)
 
         if self.images:
-            self.space_to_image()
+            self.space_to_image("sean-kane")
 
     def bayley_king(self):
         happiness_values = []
@@ -421,7 +421,7 @@ class Schelling:
             happiness_values.append(happiness_temp)
             # Save the image of the final neighborhood if this switch is on
             if self.images:
-                self.space_to_image()
+                self.space_to_image("bayley-king")
 
         # This goes through calculating the average happiness at each epoch, leave this alone.
         temp = []
@@ -434,7 +434,7 @@ class Schelling:
         self.happiness_ts.append(temp)
 
         if self.images:
-            self.space_to_image()
+            self.space_to_image("bayley-king")
 
     def sean_rice(self, prop_of_others: float = 0.75):
         happiness_values = []
@@ -540,7 +540,7 @@ class Schelling:
             happiness_values.append(happiness_temp)
             # Save the image of the final neighborhood if this switch is on
             if self.images:
-                self.space_to_image()
+                self.space_to_image("sean-rice")
 
         # This goes through calculating the average happiness at each epoch, leave this alone.
         temp = []
@@ -553,9 +553,9 @@ class Schelling:
         self.happiness_ts.append(temp)
 
         if self.images:
-            self.space_to_image()
+            self.space_to_image("sean-rice")
 
-    def space_to_image(self):
+    def space_to_image(self, name_caption=None):
         im = np.zeros((self.N, self.N, 3), dtype=np.uint8)
         for i in range(self.N):
             for j in range(self.N):
@@ -575,6 +575,8 @@ class Schelling:
         )
 
         file_name = f"{datetime.datetime.now()}".split()[0]
+        if name_caption is not None:
+            file_name += f"_{name_caption}"
         file_name += f"_k={self.k}_N={self.N}_epochs={self.epochs}"
         file_name = file_name.replace(":", ";")
         img.save(file_name + ".png")
@@ -585,7 +587,8 @@ def get_argparser() -> argparse.ArgumentParser:
     # fmt: off
     ap.add_argument("-e", "--epochs", action="store", type=int, default=30, help="the number of epochs to run. default: %(default)s")
     ap.add_argument("-i", "--iterations", action="store", type=int, default=32, help="the number of iterations to run. default: %(default)s")
-    ap.add_argument("--show", action="store", type=bool, default=False, help="show the final plot after program has run.")
+    ap.add_argument("--save-images", action="store_true", help="save images of the final space")
+    ap.add_argument("--show", action="store_true", help="show the final plot after program has run.")
 
     ap.add_argument("--all", action="store_true", required=False, dest="run_all", help="run all variants. overrides other choices. default: True if no other run options are given, else False")
     ap.add_argument("--random", action="store_true", required=False, dest="run_random", help="run the random policy. default: %(default)s")
@@ -626,8 +629,14 @@ if __name__ == "__main__":
     iterations = args.iterations
     labels = []
 
-    s = Schelling(N=40, k=4, epochs=epochs, iterations=iterations)
-    print(f"Simulating... (epochs: {epochs}, iterations: {iterations})")
+    s = Schelling(
+        N=40,
+        k=4,
+        epochs=epochs,
+        iterations=iterations,
+        save_images=args.save_images
+    )
+    print(f"Simulating (epochs: {epochs}, iterations: {iterations})... ")
 
     if args.run_random:
         print("  Random")
