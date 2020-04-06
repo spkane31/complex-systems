@@ -123,8 +123,6 @@ class Schelling:
 
         self.happiness_ts.append(temp)
 
-        pass
-
     @staticmethod
     def count_neighbors_of_tribe(space: np.ndarray, x: int, y: int, tribe: int) -> int:
         sx, sy = space.shape
@@ -439,7 +437,7 @@ class Schelling:
     def sean_rice(self, prop_of_others: float = 0.75):
         happiness_values = []
         # Sean Rice's choice policy
-        for _ in range(self.iterations):
+        for iteration in range(self.iterations):
             # initial setup
             self.initialize_space()
             happiness_temp = (
@@ -464,8 +462,9 @@ class Schelling:
                 tribe = self.space[x, y]
                 nodes_of_tribe[tribe].append(node)
 
-            for _ in range(epochs):
+            for epoch in range(epochs):
                 if self.print_statements:
+                    print("-"*10+f"iteration={iteration}, epoch={epoch} "+"-"*10)
                     print(self.total_happiness() / self.population)
                 happiness_temp.append(self.total_happiness() / self.population)
 
@@ -492,6 +491,8 @@ class Schelling:
                         # would they be happy if they moved here?
                         other_would_swap = self.happiness(x, y, tribe=other_tribe) == 1
                         if we_would_swap and other_would_swap:
+                            if self.print_statements:
+                                print(f"found swap: {node}@{(x,y)} <-> {other}@{ox, oy}")
                             # we found someone to trade places with :)
                             # move us to them
                             self.space[ox, oy] = tribe
@@ -587,7 +588,8 @@ def get_argparser() -> argparse.ArgumentParser:
     # fmt: off
     ap.add_argument("-e", "--epochs", action="store", type=int, default=30, help="the number of epochs to run. default: %(default)s")
     ap.add_argument("-i", "--iterations", action="store", type=int, default=32, help="the number of iterations to run. default: %(default)s")
-    ap.add_argument("--save-images", action="store_true", help="save images of the final space")
+    ap.add_argument("--print-statements", action="store_true", help="enable printing various logging/debug statements.")
+    ap.add_argument("--save-images", action="store_true", help="enable saving images of the final space.")
     ap.add_argument("--show", action="store_true", help="show the final plot after program has run.")
 
     ap.add_argument("--all", action="store_true", required=False, dest="run_all", help="run all variants. overrides other choices. default: True if no other run options are given, else False")
@@ -634,7 +636,8 @@ if __name__ == "__main__":
         k=4,
         epochs=epochs,
         iterations=iterations,
-        save_images=args.save_images
+        save_images=args.save_images,
+        print_statements=args.print_statements
     )
     print(f"Simulating (epochs: {epochs}, iterations: {iterations})... ")
 
