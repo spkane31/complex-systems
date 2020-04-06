@@ -3,6 +3,7 @@
 # Sean Kane, Bayley King, Sean Rice
 
 import argparse
+from collections import defaultdict
 import datetime
 import random
 import time
@@ -70,7 +71,7 @@ class Schelling():
             # Find a random starting point and iterate from there
             x, y = random.randint(0, self.N-1), random.randint(0, self.N-1)
 
-            for _ in range(self.epochs):
+            for e in range(self.epochs):
                 if self.print_statements: print(self.total_happiness() / self.population)
                 happiness_temp.append(self.total_happiness()/self.population)
 
@@ -91,6 +92,9 @@ class Schelling():
                 t_h = self.total_happiness()
                 # Scenario where everyone is happy
                 if t_h == self.population:
+                    # auto-fill happiness-over-epochs; won't change anymore
+                    happiness_temp += [t_h/self.population] * (self.epochs - e)
+                    # stop simulating this iteration
                     break
                 
                 if self.print_statements: print(t_h / self.population)
@@ -108,8 +112,31 @@ class Schelling():
         self.happiness_ts.append(temp)
         
         pass
+    
+    @staticmethod
+    def count_neighbors_of_tribe(
+        space: np.ndarray,
+        x: int,
+        y: int,
+        tribe: int
+    ) -> int:
+        sx, sy = space.shape
+        # 8-neighborhood with periodic boundary conditions
+        neighbors = (
+            ((x+ox) % sx, (y+oy) % sy)
+            for ox in (-1,0,1) for oy in (-1,0,1)
+            if ox != 0 or oy != 0 # don't include self
+        )
+        count = sum(1 if space[nx,ny]==tribe else 0 for (nx,ny) in neighbors)
+        return count
+    
+    def happiness(self, x, y, tribe=None):
+        tribe = self.space[x,y] if tribe is None else tribe
+        n_same = self.count_neighbors_of_tribe(self.space, x, y, tribe)
+        return 1 if n_same >= self.k else 0
 
-    def happiness(self, x, y):
+
+    def __happiness_old(self, x, y):
         # Calculate whether an agent is happy at it's own location
 
         # Sums the values of all the neighbors
@@ -381,29 +408,99 @@ class Schelling():
         
         if self.images: self.space_to_image()
 
-    def sean_rice(self):
-        raise NotImplementedError("i haven't done this yet")
+    def sean_rice(self, prop_of_others: float=0.75):
         happiness_values = []
         # Sean Rice's choice policy
         for _ in range(self.iterations):
-            # Start by creating a new starting space
+            # initial setup
             self.initialize_space()
-            
+            happiness_temp = [] # Stores the happiness values at each epoch for each iteration
 
-            happiness_temp = [] # Stores the happiness values at each epoch for each iteration, the avg is taken care of later
+            # get the list of nodes in a tribe (not spaces)
+            nodes = [
+                (i, j)
+                for i in range(0, self.N) for j in range(0, self.N)
+                if self.space[i, j] != 0
+            ]
+            # define a mapping from the node's "name" (original location) to
+            # their current location. original *is* current location at init.
+            node_locations = {node: node for node in nodes}
+            # define a mapping from node tribe (-1 or 1) to a list of node
+            # names and populate with nodes
+            nodes_of_tribe = defaultdict(list)
+            for node in nodes:
+                x, y = node_locations[node]
+                tribe = self.space[x, y]
+                nodes_of_tribe[tribe].append(node)
+
+            
             for _ in range(epochs):
                 if self.print_statements: print(self.total_happiness() / self.population)
                 happiness_temp.append(self.total_happiness()/self.population)
 
-                for i in range(self.N):
-                    for j in range(self.N):
-                        # Here is where your algorithm goes, this iterates through the list in order from top left to bottom right so you may want to change that
-                        # The 'for _ in range(epochs):' should stay, that makes through it goes through the same number of epochs each time
+                random.shuffle(nodes)
+                for node in nodes:
+                    x, y = node_locations[node]
+                    tribe = self.space[x,y]
+                    # if already happy, do nothing.
+                    if self.happiness(x, y) == 1:
+                        continue
 
-                        # TODO: insert code
+                    # otherwise, try to find someone to swap with
+                    # start by picking a random subset of others
+                    other_tribe = -1 * tribe
+                    n_others = len(nodes_of_tribe[other_tribe])
+                    others = random.sample(
+                        nodes_of_tribe[other_tribe],
+                        int(n_others * prop_of_others)
+                    )
+                    already_done = False
+                    for other in others:
+                        ox, oy = node_locations[other]
+                        # would we be happy if we moved there?
+                        we_would_swap = self.happiness(ox, oy, tribe=tribe) == 1
+                        # would they be happy if they moved here?
+                        other_would_swap = self.happiness(x, y, tribe=other_tribe) == 1
+                        if we_would_swap and other_would_swap:
+                            # we found someone to trade places with :)
+                            # move us to them
+                            self.space[ox, oy] = tribe
+                            node_locations[node] = (ox, oy)
+                            # move them to us
+                            self.space[x, y] = other_tribe
+                            node_locations[other] = (x, y)
+                            already_done = True
+                            break
+                    if already_done:
+                        continue
 
-                        pass
-                        
+                    # last resort: random move.
+                    # we are going to check spaces for one that makes us happy,
+                    # but failing that we need to fall back to the spot that is
+                    # *closest* to making us happy. we track that "best"
+                    # space in these two variables and init it to our current.
+                    spaces_to_check = random.sample(self.open_spaces, self.q)
+                    best_space = node
+                    best_fail_n = self.count_neighbors_of_tribe(self.space, x, y, tribe)
+                    for space in spaces_to_check:
+                        sx, sy = space
+                        if self.happiness(sx, sy, tribe=tribe):
+                            # we found an empty spot that makes us happy. swap.
+                            best_space = space
+                            break
+                        else:
+                            # otherwise, track it if it's an improvement to our current best
+                            n_same = self.count_neighbors_of_tribe(self.space, sx, sy, tribe)
+                            if n_same > best_fail_n:
+                                best_fail_n = n_same
+                                best_space = space
+                    
+                    self.space[sx, sy] = tribe
+                    self.space[x, y] = 0
+                    node_locations[node] = best_space
+                    self.open_spaces.remove(best_space)
+                    self.open_spaces.append((x, y))
+                
                 if self.print_statements: print(self.total_happiness() / self.population)
                 happiness_temp.append(self.total_happiness()/self.population)
             
@@ -442,6 +539,7 @@ class Schelling():
 
         file_name = f"{datetime.datetime.now()}".split()[0]
         file_name += f"_k={self.k}_N={self.N}_epochs={self.epochs}"
+        file_name = file_name.replace(":", ";")
         img.save(file_name+ ".png")
 
 def get_argparser() -> argparse.ArgumentParser:
@@ -486,7 +584,7 @@ if __name__ == "__main__":
     labels = []
 
     s = Schelling(N=40, k=4, epochs=epochs, iterations=iterations)
-    print("Simulating...")
+    print(f"Simulating... (epochs: {epochs}, iterations: {iterations})")
 
     if args.run_random:
         print("  Random")
@@ -518,12 +616,8 @@ if __name__ == "__main__":
         
     if args.run_rice:
         print(f"  Sean Rice")
-        try:
-            s.sean_rice()
-            labels.append("Sean Rice")
-        except NotImplementedError: 
-            # nobody cares
-            pass
+        s.sean_rice()
+        labels.append("Sean Rice")
         print(f"    Execution time: {round(time.time() - start, 2)} seconds")
 
     fig = plt.figure()
