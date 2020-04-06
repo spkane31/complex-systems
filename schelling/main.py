@@ -6,6 +6,7 @@ import argparse
 import datetime
 import random
 import time
+import statistics
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,7 +28,7 @@ class Schelling():
         self.epochs = epochs
 
         self.print_statements = False
-        self.images = False
+        self.images = True
 
         # Timeseries of happiness values
         self.happiness_ts = []
@@ -74,19 +75,24 @@ class Schelling():
                 if self.print_statements: print(self.total_happiness() / self.population)
                 happiness_temp.append(self.total_happiness()/self.population)
 
+                valid_locations = []
                 for i in range(self.N):
                     for j in range(self.N):
-                        x0, y0 = (x + i) % self.N, (y + j) % self.N
-                        h = self.happiness(x0, y0)
+                        if self.space[i, j] != 0:
+                            valid_locations.append((i, j))
+                random.shuffle(valid_locations)
 
-                        if h == 0:
-                            # If the agent is unhappy update that position
-                            x1, y1 = self.find_random_open(x0, y0)
+                for location in valid_locations:
+                    x0, y0 = location
+                    h= self.happiness(x0, y0)
+
+                    if h == 0:
+                        x1, y1 = self.find_random_open(x0, y0)
                             
-                            self.space[x1, y1] = self.space[x0, y0]
-                            self.space[x0, y0] = 0
-                            self.open_spaces.remove((x1, y1))
-                            self.open_spaces.append((x0, y0))
+                        self.space[x1, y1] = self.space[x0, y0]
+                        self.space[x0, y0] = 0
+                        self.open_spaces.remove((x1, y1))
+                        self.open_spaces.append((x0, y0))
 
                 t_h = self.total_happiness()
                 # Scenario where everyone is happy
@@ -99,14 +105,19 @@ class Schelling():
             # Produce timeseries for the happiness
             happiness_values.append(happiness_temp)
         temp = []
+        stddev = []
         for i in range(self.epochs):
             t = 0
+            vals = []
             for j in range(self.iterations):
                 t += happiness_values[j][i]
+                vals.append(happiness_values[j][i])
             temp.append(t / self.iterations)
+            # stddev.append(statistics.stdev(vals))
 
         self.happiness_ts.append(temp)
-        
+        print(f"Random move")
+        for s in stddev: print(round(s, 3))
         pass
 
     def happiness(self, x, y):
@@ -230,14 +241,19 @@ class Schelling():
             if self.images: self.space_to_image()
 
         temp = []
+        stddev = []
         for i in range(self.epochs):
             t = 0
+            vals = []
             for j in range(self.iterations):
                 t += happiness_values[j][i]
+                vals.append(happiness_values[j][i])
             temp.append(t / self.iterations)
+            stddev.append(statistics.stdev(vals))
 
         self.happiness_ts.append(temp)
-        
+        print(f"social_policy n={n} p={p}")
+        for s in stddev: print(round(s, 3))
         if self.images: self.space_to_image()
         pass
 
@@ -264,7 +280,7 @@ class Schelling():
         bx, by = b
         return ((ax - bx) ** 2 + (ay - by) ** 2) ** 0.5
 
-    def sean_kane(self, distance=None, n=5, p=3):
+    def sean_kane(self, distance=None, n=5, p=3, epochs=30):
         self.n = n
         self.p = p
         
@@ -305,7 +321,7 @@ class Schelling():
                         # The 'for _ in range(epochs):' should stay, that makes through it goes through the same number of epochs each time
 
                         # TODO: insert code
-                        if self.happiness(i, j) < 0.25 and self.space[i, j] != 0:
+                        if self.happiness(i, j) < self.k and self.space[i, j] != 0:
                             locations = self.ask_friends(i, j)
 
                             if len(locations) > 0:
@@ -328,13 +344,19 @@ class Schelling():
 
         # This goes through calculating the average happiness at each epoch, leave this alone.
         temp = []
+        stddev = []
         for i in range(self.epochs):
             t = 0
+            vals = []
             for j in range(self.iterations):
                 t += happiness_values[j][i]
+                vals.append(happiness_values[j][i])
             temp.append(t / self.iterations)
+            stddev.append(statistics.stdev(vals))
 
         self.happiness_ts.append(temp)
+        print(f"kane")
+        for s in stddev: print(round(s, 3))
         
         if self.images: self.space_to_image()
 
@@ -485,7 +507,7 @@ if __name__ == "__main__":
     iterations = args.iterations
     labels = []
 
-    s = Schelling(N=40, k=4, epochs=epochs, iterations=iterations)
+    s = Schelling(N=100, k=4, epochs=epochs, iterations=iterations)
     print("Simulating...")
 
     if args.run_random:
@@ -505,11 +527,14 @@ if __name__ == "__main__":
                 print(f"    Execution time: {round(time.time() - start, 2)} seconds")
 
     if args.run_kane:
-        print(f"  Sean Kane")
-        start = time.time()
-        s.sean_kane()
-        labels.append("Sean Kane")
-        print(f"    Execution time: {round(time.time() - start, 2)} seconds")
+        for n in [5, 10, 20]:
+            for p in [3, 5, 7]:
+                print(f"  Sean Kane (n={n}, p={p})")
+                start = time.time()
+                s.sean_kane(n=n, p=p, epochs=epochs)
+                labels.append(f"Sean Kane (n={n}, p={p})")
+                print(f"    Execution time: {round(time.time() - start, 2)} seconds")
+
     if args.run_king:
         print(f"  Bayley King")
         s.bayley_king()
