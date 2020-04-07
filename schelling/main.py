@@ -651,10 +651,10 @@ def get_argparser() -> argparse.ArgumentParser:
 
     ap.add_argument("--all", action="store_true", required=False, dest="run_all", help="run all variants. overrides other choices. default: True if no other run options are given, else False")
     ap.add_argument("--random", action="store_true", required=False, dest="run_random", help="run the random policy. default: %(default)s")
-    #ap.add_argument("--social", action="store_true", required=False, dest="run_social", help="run the social policy. default: %(default)s")
-    #ap.add_argument("--kane", action="store_true", required=False, dest="run_kane",help="run sean kane's policy. default: %(default)s")
+    ap.add_argument("--social", action="store_true", required=False, dest="run_social", help="run the social policy. default: %(default)s")
+    ap.add_argument("--kane", action="store_true", required=False, dest="run_kane",help="run sean kane's policy. default: %(default)s")
     ap.add_argument("--king", action="store_true", required=False, dest="run_king",help="run bayley king's policy. default: %(default)s")
-    #ap.add_argument("--rice", action="store_true", required=False, dest="run_rice",help="run sean rice's policy. default: %(default)s")
+    ap.add_argument("--rice", action="store_true", required=False, dest="run_rice",help="run sean rice's policy. default: %(default)s")
     # fmt: on
     return ap
 
@@ -704,7 +704,7 @@ if __name__ == "__main__":
         s.random_move()
         labels.append("Random")
         print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-    '''
+    
     if args.run_social:
         for n in [5, 10, 20]:
             for p in [3, 5, 7]:
@@ -722,7 +722,7 @@ if __name__ == "__main__":
                 s.sean_kane(n=n, p=p, epochs=epochs)
                 labels.append(f"Sean Kane (n={n}, p={p})")
                 print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-    '''
+    
     if args.run_king:
         for n in [5, 10, 20]:
             for p in [3, 5, 7]:
@@ -731,13 +731,13 @@ if __name__ == "__main__":
                 s.bayley_king(n=n, p=p, epochs=epochs)
                 labels.append(f"Bayley King (n={n}, p={p})")
                 print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-    '''
+    
     if args.run_rice:
         print(f"  Sean Rice")
         s.sean_rice()
         labels.append("Sean Rice")
         print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-    '''
+    
     fig = plt.figure()
     ax = plt.subplot(111)
     
