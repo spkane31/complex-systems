@@ -356,27 +356,84 @@ class Schelling:
         self.happiness_ts.append(epoch_stats)
         self.complete_policy(POLICY_NAME, epoch_stats, True, self.images)
 
-    def bayley_king(self):
+    def length_location(self,locations,i,j):
+        dist = []
+        for loc in locations:
+            dist.append(((loc[0] - i)**2 + (loc[1] - j)**2)**.5)
+        temp = list(zip(dist,locations))
+        temp.sort()
+        return temp[0][1]
+
+
+    def bayley_king(self,n=5, p=3,epochs=10,randLocs=10):
         POLICY_NAME = "bayley-king"
         happiness_values = []
-        # Bayley's choice policy
-        for _ in range(self.iterations):
-            # Start by creating a new starting space
-            self.initialize_space()
+        
+        # p = size of square neighborhood to look at
+        self.p = p
+        # n = number of friends
+        self.n = n
 
-            happiness_temp = []  # per-iter time series of happiness over epochs
-            # store initial conditions
+        for _ in range(self.iterations):
+            self.initialize_space()
+            
+            # First find each agents "friends", randomly. This will be stored in a dictionary
+            # this will require a lot of re-writing, but first thing that came to mind
+            self.friends = {}
+
+            for i in range(self.N):
+                for j in range(self.N):
+                    if self.space[i, j] != 0:
+                        temp = []
+                        while len(temp) < n:
+                            x, y = self.get_random_pt()
+                            if (x,y) not in temp:
+                                temp.append((x, y))
+                        self.friends[(i, j)] = temp
+            happiness_temp = []
             happiness_temp.append(self.total_happiness() / self.population)
 
-            for e in range(epochs):
+            for _ in range(epochs):
+                #print('Epoch:',e)
                 for i in range(self.N):
                     for j in range(self.N):
                         # Here is where your algorithm goes, this iterates through the list in order from top left to bottom right so you may want to change that
                         # The 'for _ in range(epochs):' should stay, that makes through it goes through the same number of epochs each time
 
-                        # TODO: insert code
+                        if self.happiness(i, j) == 0 and self.space[i, j] != 0: # if cell is unhappy and is an entity
+ 
+                            locations = self.ask_friends(i, j)
 
-                        pass
+                            if len(locations) > 0:
+                                # calcualte the distance from current point to each suggested location
+                                # sort by minnimum, go to minnimum travel location
+                                new_loc = self.length_location(locations,i,j)
+                            else:
+                                # generate 10 random locations
+                                # move to minnimum travel distance location
+                                locations = []
+                                for i in range(randLocs):
+                                    locations.append(self.get_random_pt())
+                                    while self.space[locations[i]] != 0:
+                                        locations[i] = self.get_random_pt()
+                                new_loc = self.length_location(locations,i,j)
+                            # print(new_loc)
+                            try:
+                                self.friends[new_loc] = self.friends[(i, j)]
+                            except:
+                                print(new_loc)
+                                print(i,j)
+                            self.friends[(i, j)] = []
+
+                            # print(self.friends[new_loc])
+                            # print(self.friends[(i, j)])
+
+                            self.space[new_loc[0], new_loc[1]] = self.space[i, j]
+                            self.space[i, j] = 0
+
+                            # print(self.space)
+
+                            # quit()
 
                 if self.print_statements:
                     print(self.total_happiness() / self.population)
@@ -662,13 +719,16 @@ if __name__ == "__main__":
                 s.sean_kane(n=n, p=p, epochs=epochs)
                 labels.append(f"Sean Kane (n={n}, p={p})")
                 print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-
+ 
     if args.run_king:
-        print(f"  Bayley King")
-        s.bayley_king()
-        labels.append("Bayley King")
-        print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-
+        for n in [5, 10, 20]:
+            for p in [3, 5, 7]:
+                print(f"  Bayley King (n={n}, p={p})")
+                start = time.time()
+                s.bayley_king(n=n, p=p, epochs=epochs)
+                labels.append(f"Bayley King (n={n}, p={p})")
+                print(f"    Execution time: {round(time.time() - start, 2)} seconds")
+   
     if args.run_rice:
         print(f"  Sean Rice")
         s.sean_rice()
