@@ -83,10 +83,6 @@ def randomInit():
 def printParts(swarm):
     [particle.printVals() for particle in swarm]
 
-def updateGlobal(swarm,pos):
-    for particle in swarm:
-        particle.globalBest = pos
-
 
 def main():
     # particle initialization
