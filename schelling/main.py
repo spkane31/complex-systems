@@ -356,7 +356,6 @@ class Schelling:
         self.happiness_ts.append(epoch_stats)
         self.complete_policy(POLICY_NAME, epoch_stats, True, self.images)
 
-
     def length_location(self,locations,i,j):
         dist = []
         for loc in locations:
@@ -435,8 +434,7 @@ class Schelling:
                             # print(self.space)
 
                             # quit()
-                        
-                        
+
                 if self.print_statements:
                     print(self.total_happiness() / self.population)
                 happiness_temp.append(self.total_happiness() / self.population)
@@ -446,7 +444,6 @@ class Schelling:
         epoch_stats = self.process_stats(happiness_values, self.iterations, self.epochs)
         self.happiness_ts.append(epoch_stats)
         self.complete_policy(POLICY_NAME, epoch_stats, True, self.images)
-
 
     def sean_rice(self, prop_of_others: float = 0.75):
         POLICY_NAME = "sean-rice"
@@ -704,7 +701,7 @@ if __name__ == "__main__":
         s.random_move()
         labels.append("Random")
         print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-    
+
     if args.run_social:
         for n in [5, 10, 20]:
             for p in [3, 5, 7]:
@@ -722,7 +719,7 @@ if __name__ == "__main__":
                 s.sean_kane(n=n, p=p, epochs=epochs)
                 labels.append(f"Sean Kane (n={n}, p={p})")
                 print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-    
+ 
     if args.run_king:
         for n in [5, 10, 20]:
             for p in [3, 5, 7]:
@@ -731,16 +728,16 @@ if __name__ == "__main__":
                 s.bayley_king(n=n, p=p, epochs=epochs)
                 labels.append(f"Bayley King (n={n}, p={p})")
                 print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-    
+   
     if args.run_rice:
         print(f"  Sean Rice")
         s.sean_rice()
         labels.append("Sean Rice")
         print(f"    Execution time: {round(time.time() - start, 2)} seconds")
-    
+
     fig = plt.figure()
     ax = plt.subplot(111)
-    
+
     x_axis = np.arange(1, epochs + 1 + 1)
     for (i, data) in enumerate(s.happiness_ts):
         if isinstance(data, tuple):
