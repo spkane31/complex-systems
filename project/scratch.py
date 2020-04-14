@@ -32,7 +32,7 @@ class Particle():
                 self.formattedList.append("%.2f"%i)        
         print(self.name)
         print('\tGlobal Best:',self.globalBest)
-        #print('\tLocal Best:',self.localBest)
+        print('\tLocal Best:',self.localBest)
         print('\tSelf Best:',self.selfBest)
         print('\tCurrent Location:',self.currentPos)
         print('\tCurrent Velocity:',self.currentVel)
@@ -80,8 +80,56 @@ def randomInit():
     y = np.random.random()*5.8
     return x,y
 
+
 def printParts(swarm):
     [particle.printVals() for particle in swarm]
+
+
+def distance(pos1,pos2):
+    return np.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
+
+def updateLocal(swarm):
+    finalDist = []
+    for particle1 in swarm:
+        dist = []
+        for particle2 in swarm:
+            if particle1.name == particle2.name:
+                continue
+            dist.append([distance(particle1.currentPos,particle2.currentPos),particle2.name,fit.rastrigin(particle2.currentPos),particle2.currentPos])
+        dist.sort()
+        finalDist.append(dist[:n])
+    counter = 0
+    for d in finalDist:
+        d.sort(key = lambda x: x[2])
+        swarm[counter].localBest = d[0][3]
+        counter += 1
+    #print('\n',finalDist,'\n')
+
+def swapPos(swarm):
+    fits = []
+    for particle in swarm:
+        fits.append([fit.rastrigin(particle.currentPos),particle.name,particle.currentPos])
+    fits.sort()
+    fits = fits[-2:]
+    #print('\n',fits,'\n')
+    for particle in swarm:
+        if particle.name == fits[0][1]:
+            particle.currentPos = fits[1][2]
+        elif particle.name == fits[1][1]:
+            particle.currentPos = fits[0][2]    
+
+def resetPos(swarm):
+    fits = []
+    for particle in swarm:
+        fits.append([fit.rastrigin(particle.currentPos),particle.name,particle.currentPos])
+    fits.sort()
+    fits = fits[-2:]
+    #print('\n',fits,'\n')
+    for particle in swarm:
+        if particle.name == fits[0][1]:
+            particle.currentPos = [np.random.random()*5.8,np.random.random()*5.8]
+        elif particle.name == fits[1][1]:
+            particle.currentPos = [np.random.random()*5.8,np.random.random()*5.8]
 
 
 def main():
@@ -98,8 +146,10 @@ def main():
            bestG = fit.rastrigin(particle.currentPos)
     updateGlobal(swarm,loc)
 
-    printParts(swarm) # [particle.printVals() for particle in swarm] # prints particles
-
+    #printParts(swarm) # [particle.printVals() for particle in swarm] # prints particles
+    updateLocal(swarm)
+    printParts(swarm)
+    swapNums = 0
 
     start = timeit.default_timer()
     iterations = 10000
@@ -116,19 +166,20 @@ def main():
                 updateGlobal(swarm,particle.currentPos)
                 # Update global best
             # Part 3: If personal best is less than local best,
-            if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.localBest):
+#            if fit.rastrigin(particle.currentPos) < fit.rastrigin(particle.localBest):
                 # Update global best
-                particle.localBest = particle.currentPos
+#                updateLocal(swarm)
             # Part 4: Update velocity and position matrices
             update_velocity(particle)
             update_position(particle)
             #if i % 50== 0:
             #    print('Iterations:',i)            
             #    particle.printVals()
-
-            #if i == iterations-1:
-                #sleep(1)
-            #    particle.printVals()
+        '''
+        if randVal() < p:
+            resetPos(swarm)
+            swapNums += 1
+        '''
 
     stop = timeit.default_timer()
     print('##################################')
@@ -139,7 +190,8 @@ def main():
         if fit.rastrigin(particle.currentPos) <= bestVal:
             bestVal = fit.rastrigin(particle.currentPos)
             best = particle
-    print('W:',w,'\tC:',C,'\tS:',S)
+    print('W:',w,'  C:',C,'  S1:',S,'  S2:',S2,'  N:',n,'  p:',p)
+    print('Number of swaps:',swapNums)
     #best.printPos()
     print('Time to run: {0:.3f}'.format(stop - start))
     #####################################################

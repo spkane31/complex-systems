@@ -1,6 +1,9 @@
 w = 0.9 # Inertia
 C =  0.5 # Cognitive Potential
 S =  0.3 # Social Potential 
+S2 = 0.3
+n = 3
+p = 0.01
 #S2 = 0.2 # Local Social Potential
 ub = [5.8, 5.8]
 lb = [-5.8, -5.8]
