@@ -1,4 +1,4 @@
-from scratch import Particle
+from particle import Particle
 from params import swarmNames
 import fit
 import random
@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class Swarm():
-    def __init__(self, size: int, fitness, swapping=False):
+    def __init__(self, size: int, fitness, swapping=False, velocities=False, increase_velocity=False):
         self.particles = []
         for i in range(size): 
             self.particles.append(Particle.New(swarmNames[i]))
@@ -26,7 +26,9 @@ class Swarm():
         self.iterations = 0
         self.epsilon = 0.001
 
-        self.swapping = True
+        self.swapping = swapping
+        self.velocities = velocities
+        self.increase_velocity = increase_velocity
 
         self.PRINTS = False
 
@@ -60,6 +62,12 @@ class Swarm():
             if self.swapping:
                 self.SwapParticles()
 
+            if self.velocities:
+                self.SwapVelocities()         
+
+            if self.increase_velocity:
+                self.IncreaseVelocity(2.0)      
+
             self.historicalBests.append(self.globalBest)
             if self.PRINTS: 
                 print(f"Best Position: {tuple(self.globalBest)}")
@@ -68,7 +76,6 @@ class Swarm():
                 return
 
             self.evaluations.append(self.fitnessFunc(self.globalBest))
-
 
     def IsGlobalBest(self, val) -> bool:
         if val < self.fitnessFunc(self.globalBest):
@@ -109,22 +116,45 @@ class Swarm():
         
         pass
 
-    def SwapParticles(self):
-        i1 = int(random.random() * len(self.particles))
-        i2 = int(random.random() * len(self.particles))
-        while i2 != i1:
+    def SwapParticles(self, p=0.10):
+        # Happens with a probability p
+        if random.random() < p:
+            i1 = int(random.random() * len(self.particles))
             i2 = int(random.random() * len(self.particles))
+            while i2 != i1:
+                i2 = int(random.random() * len(self.particles))
 
-        temp = self.particles[i1].currentPos
-        self.particles[i1].currentPos = self.particles[i2].currentPos
-        self.particles[i2].currentPos = temp
+            temp = self.particles[i1].currentPos
+            self.particles[i1].currentPos = self.particles[i2].currentPos
+            self.particles[i2].currentPos = temp
         return
+
+    def SwapVelocities(self, p=0.10):
+        if random.random() < p:
+            i1 = int(random.random() * len(self.particles))
+            i2 = int(random.random() * len(self.particles))
+            while i2 != i1:
+                i2 = int(random.random() * len(self.particles))
+
+            temp = self.particles[i1].currentVel
+            self.particles[i1].currentVel = self.particles[i2].currentVel
+            self.particles[i2].currentVel = temp
+        return
+
+    def IncreaseVelocity(self, scale, p=0.10):
+        if random.random() < p:
+            i1 = int(random.random() * len(self.particles))
+
+            for i in range(len(self.particles[i1].currentVel)):
+                self.particles[i1].currentVel[i] *= scale
             
     def CheckConvergence(self):
         """
         Checks the last ten global bests euclidean distances to the previous iterations
 
         If this value is less than self.epsilon, the swarm has converged.
+
+        Not the best way to do it, but a start
         """
 
         total = 0
@@ -143,25 +173,44 @@ class Swarm():
 
 if __name__ == "__main__":
     epochs = 10000
-    s = Swarm(20, fit.rastrigin)
+    iterations = 10
+    particles = 20
 
-    s.Run(epochs)
+    for _ in range(iterations):
 
-    e = s.evaluations[1:]
-    s = Swarm(20, fit.rastrigin, swapping=True)
-    s.Run(epochs)
+        s = Swarm(particles, fit.rastrigin)
+        s.Run(epochs)
+        e = s.evaluations[1:]
 
+        s = Swarm(particles, fit.rastrigin, swapping=True)
+        s.Run(epochs)
+        e2 = s.evaluations[1:]
+
+        s = Swarm(particles, fit.rastrigin, velocities=True)
+        s.Run(epochs)
+        e3 = s.evaluations[1:]
+
+        s = Swarm(particles, fit.rastrigin, increase_velocity=True)
+        s.Run(epochs)
+        e4 = s.evaluations[1:]
+
+        break # TODO: build the tools for averaging over multiple runs
+
+    # Plotting
     fig = plt.figure()
     ax = plt.subplot(111)
 
     x_axis = np.arange(1, epochs)
     ax.plot(e, label="No Swapping")
-    ax.plot(s.evaluations[1:], label="Swapping")
+    ax.plot(e2, label="Swapping")
+    ax.plot(e3, label="Swap Velocities")
+    ax.plot(e4, label="Increase Velocities")
+
 
     # plt.plot(e)
     # plt.plot(s.evaluations[1:])
     plt.xlabel("Epochs")
-    plt.ylabel("Happiness")
+    plt.ylabel("Value")
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.6, chartBox.height])
     ax.legend(loc="upper center", bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
