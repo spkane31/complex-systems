@@ -8,19 +8,21 @@ import fit
 from params import *
 np.set_printoptions(precision=3)
 
+from typing import List
+
 def clear():
     _ = system('clear')
 
 #clear()
 
 class Particle():
-    def __init__(self,currentLocation,name):
+    def __init__(self, currentLocation, name: int):
         self.name = name
         self.globalBest = randomInit()
         self.localBest = randomInit()
         self.selfBest = currentLocation
         self.currentPos = currentLocation
-        self.currentVel = 0
+        self.currentVel = [random.random()] * len(currentLocation)
         self.output = [self.globalBest, self.localBest, self.selfBest,self.currentPos]
         self.formattedList = []
 
@@ -46,7 +48,29 @@ class Particle():
                 self.formattedList.append("%.2f"%i)        
         print(self.name,'\tLocation:',self.currentPos,"\tFitness:{0:.3f}".format(fit.rastrigin(self.currentPos)))
 
-  
+    def updateGlobal(self, newGlobal):
+        self.globalBest = newGlobal
+
+    def updateLocal(self, newLocal): 
+        self.localBest = newLocal
+
+    @staticmethod
+    def New(name: str):
+        p = Particle(
+            [randVal() * 5.8, randVal() * 5.8],
+            name
+        )
+        return p
+
+    def IsLocalBest(self, loc, f):
+        if loc < f(self.currentPos):
+            return True
+        return False
+
+
+# define the Swarm type
+Swarm = List[Particle]
+ 
 def randVal():
     return np.random.random()
 
@@ -70,25 +94,22 @@ def update_position(particle):
     elif particle.currentPos[1] <= lb[1]:
         particle.currentPos[1] = lb[1]
 
-def updateGlobal(newGlobal,swarm):
+def updateGlobal(newGlobal: float, swarm: Swarm):
     for particle in swarm:
         particle.globalBest = newGlobal
-
 
 def randomInit():
     x = np.random.random()*5.8
     y = np.random.random()*5.8
     return x,y
 
-
 def printParts(swarm):
     [particle.printVals() for particle in swarm]
-
 
 def distance(pos1,pos2):
     return np.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
 
-def updateLocal(swarm):
+def updateLocal(swarm: Swarm):
     finalDist = []
     for particle1 in swarm:
         dist = []
@@ -131,12 +152,11 @@ def resetPos(swarm):
         elif particle.name == fits[1][1]:
             particle.currentPos = [np.random.random()*5.8,np.random.random()*5.8]
 
-
 def main():
+    swarm = []
     # particle initialization
     for name in swarmNames:
-        x,y = randomInit()
-        swarm.append(Particle([x,y],name))
+        swarm.append(Particle.New(name))
     
     # finds the best position from the init particle locations
     bestG = 9999
@@ -144,7 +164,10 @@ def main():
         if fit.rastrigin(particle.currentPos) < bestG:
            loc = particle.currentPos
            bestG = fit.rastrigin(particle.currentPos)
-    updateGlobal(swarm,loc)
+
+    for particle in swarm:
+        particle.updateGlobal(loc)
+    updateGlobal(loc, swarm)
 
     #printParts(swarm) # [particle.printVals() for particle in swarm] # prints particles
     updateLocal(swarm)
