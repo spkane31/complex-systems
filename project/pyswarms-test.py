@@ -19,7 +19,7 @@ bounds = (min_bound, max_bound)
 options = {'c1': 0.5, 'c2': 0.3, 'w':0.9}
 
 # Call instance of PSO with bounds argument
-optimizer = ps.single.GlobalBestPSO(n_particles=10, dimensions=2, options=options, bounds=bounds)
+optimizer = ps.single.GlobalBestPSO(n_particles=25, dimensions=2, options=options, bounds=bounds)
 
 # Perform optimization
 cost1, pos1 = optimizer.optimize(fx.rastrigin, iters=10000)
