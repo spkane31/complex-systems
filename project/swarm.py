@@ -29,7 +29,7 @@ class Swarm():
         self._fitnessString = fitness
         self.globalBest = [10e9, 10e9]
         self.historicalBests = [self.globalBest]
-        self.evaluations = [10]
+        self.evaluations = []
 
         self.w = 0.9 # inertia
         self.C = 0.5 # Cognitive potential
@@ -46,7 +46,6 @@ class Swarm():
         self.increase_velocity = increase_velocity
         self.add_particle = add_particle
 
-
         self.PRINTS = False
 
     def UpdateGlobal(self, newGlobal: float):
@@ -54,24 +53,20 @@ class Swarm():
             p.updateGlobal(newGlobal)
 
     def SingleIteration(self):
-        if self.PRINTS: 
-            print("Iteration #", self.iterations)
-
         for p in self.particles:
-            # print("Positions: ", p.currentPos)
-            # print("Velocities: ", p.currentVel)
             val = self.fitnessFunc(p.currentPos)
             
             if p.IsLocalBest(val, self.fitnessFunc):
                 p.selfBest = p.currentPos
 
             if self.IsGlobalBest(val):
+                print(f"Single Iter: {self.globalBest, self.fitnessFunc(self.globalBest)}")
                 self.globalBest = p.currentPos
 
-        
         self.iterations += 1
 
     def Run(self, iterations=100):
+        i = 0
         for i in range(iterations):
             self.SingleIteration()
             self.UpdateVelocities()
@@ -91,16 +86,22 @@ class Swarm():
                     self.particles.append(Particle(self.dimensions, self.bounds))
 
             self.historicalBests.append(self.globalBest)
-            if self.PRINTS: 
-                print(f"Best Position: {tuple(self.globalBest)}")
+            
+            print(f"Best Position: {tuple(self.globalBest)}")
 
             if self.CheckConvergence():
-                return
+                return i
 
+            # print(self.fitnessFunc(self.globalBest))
             self.evaluations.append(self.fitnessFunc(self.globalBest))
+            print(f"val: {self.fitnessFunc(self.globalBest)}")
+
+
+        return iterations
 
     def IsGlobalBest(self, val) -> bool:
         if val < self.fitnessFunc(self.globalBest):
+            print(f"Global best: {val, self.fitnessFunc(self.globalBest)}")
             return True
 
         return False
@@ -191,9 +192,8 @@ class Swarm():
             euc_dist += pow(correctMin[i] - self.globalBest[i], 2)
 
         euc_dist = pow(euc_dist, 0.5)
-        print(euc_dist)
+        
         return euc_dist < 0.001
-
 
 
 def at_least(k: int):
@@ -211,7 +211,7 @@ def get_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser()
     # fmt: off
     ap.add_argument("-e", "--epochs", action="store", type=at_least(1), default=30, help="the number of epochs to run. default: %(default)s")
-    ap.add_argument("-i", "--iterations", action="store", type=at_least(3), default=10, help="the number of iterations to run. default: %(default)s")
+    ap.add_argument("-i", "--iterations", action="store", type=at_least(1), default=10, help="the number of iterations to run. default: %(default)s")
     ap.add_argument("--print-statements", action="store_true", help="enable printing various logging/debug statements.")
     ap.add_argument("--save-images", action="store_true", help="enable saving images of the final space.")
     ap.add_argument("--show", action="store_true", help="show the final plot after program has run.")
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     args = process_arguments()
     epochs = args.epochs
     iterations = args.iterations
-    particles = 50
+    particles = 5
     f = fit.string_to_func[args.fitness_func]
     f = args.fitness_func
     dimensions = 2
@@ -256,53 +256,61 @@ if __name__ == "__main__":
 
     stats = [0] * 5
 
-
-
-    # print(f"Minimum: {f(fit.actual_minimum('rastrigin', dimensions))}\n")
-    for _ in range(iterations):
+    print(iterations, epochs)
+    iterations_to_converge = [0] * 5
+    print(f"Testing with {args.fitness_func} function.")
+    for iteration in range(iterations):
+        print(f"Iteration #{iteration}")
 
         s = Swarm(particles, dimensions, f, bounds)
-        s.Run(epochs)
-        e = s.evaluations[1:]
+        i = s.Run(epochs)
+        e = s.evaluations
         if s.PRINTS: print(f(s.globalBest))
         if s.CorrectlyConverged():
             stats[0] += 1
+        iterations_to_converge[0] += i
 
-        s = Swarm(particles, dimensions, f, bounds, swapping=True)
-        s.Run(epochs)
-        e2 = s.evaluations[1:]
-        if s.PRINTS: print(f(s.globalBest))
-        if s.CorrectlyConverged():
-            stats[1] += 1
+        # s = Swarm(particles, dimensions, f, bounds, swapping=True)
+        # i = s.Run(epochs)
+        # e2 = s.evaluations
+        # if s.PRINTS: print(f(s.globalBest))
+        # if s.CorrectlyConverged():
+        #     stats[1] += 1
+        # iterations_to_converge[1] += i
         
 
-        s = Swarm(particles, dimensions,  f, bounds, velocities=True)
-        s.Run(epochs)
-        e3 = s.evaluations[1:]
-        if s.PRINTS: print(f(s.globalBest))
-        if s.CorrectlyConverged():
-            stats[2] += 1
+        # s = Swarm(particles, dimensions,  f, bounds, velocities=True)
+        # i = s.Run(epochs)
+        # e3 = s.evaluations
+        # if s.PRINTS: print(f(s.globalBest))
+        # if s.CorrectlyConverged():
+        #     stats[2] += 1
+        # iterations_to_converge[2] += i
 
-        s = Swarm(particles, dimensions,  f, bounds, increase_velocity=True)
-        s.Run(epochs)
-        e4 = s.evaluations[1:]
-        if s.PRINTS: print(f(s.globalBest))
-        if s.CorrectlyConverged():
-            stats[3]+= 1
+        # s = Swarm(particles, dimensions,  f, bounds, increase_velocity=True)
+        # i = s.Run(epochs)
+        # e4 = s.evaluations
+        # if s.PRINTS: print(f(s.globalBest))
+        # if s.CorrectlyConverged():
+        #     stats[3]+= 1
+        # iterations_to_converge[3] += i
 
-        s = Swarm(particles, dimensions, f, bounds, add_particle=100)
-        s.Run(epochs)
-        e5 = s.evaluations[1:]
-        if s.PRINTS: print(f(s.globalBest))
-        if s.CorrectlyConverged():
-            stats[4] += 1
+        # s = Swarm(particles, dimensions, f, bounds, add_particle=20)
+        # i = s.Run(epochs)
+        # e5 = s.evaluations
+        # if s.PRINTS: print(f(s.globalBest))
+        # if s.CorrectlyConverged():
+        #     stats[4] += 1
+        # iterations_to_converge[4] += i
         
 
         # break # TODO: build the tools for averaging over multiple runs
-
-    for stat in stats:
-        print(stat / iterations)
-    quit()
+    print(s.evaluations)
+    print("\nStats")
+    for i in range(len(stats)):
+        print(f"\t{100 * stats[i] / iterations} %.")
+        print(f"\tConverged in {iterations_to_converge[i] / iterations} iterations on average.")
+    
 
     # Plotting
     fig = plt.figure()
@@ -310,9 +318,10 @@ if __name__ == "__main__":
 
     x_axis = np.arange(1, epochs)
     ax.plot(e, label="Classic PSO")
-    ax.plot(e2, label="Swapping")
-    ax.plot(e3, label="Swap Velocities")
-    ax.plot(e4, label="Increase Velocities")
+    # ax.plot(e2, label="Swapping")
+    # ax.plot(e3, label="Swap Velocities")
+    # ax.plot(e4, label="Increase Velocities")
+    # ax.plot(e5, label="Add Particle")
 
 
     # plt.plot(e)
@@ -323,4 +332,4 @@ if __name__ == "__main__":
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.6, chartBox.height])
     ax.legend(loc="upper center", bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
 
-    plt.show()
+    # plt.show()
