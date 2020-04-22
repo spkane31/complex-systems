@@ -16,14 +16,19 @@ def clear():
 #clear()
 
 class Particle():
-    def __init__(self, currentLocation, name: int):
-        self.name = name
-        self.globalBest = randomInit()
+    def __init__(self, dimensions, bounds):
+        if bounds[0] == 0:
+            bounds = (10, 10)
+        # self.name = name
+        # self.globalBest = randomInit()
         self.localBest = randomInit()
-        self.selfBest = currentLocation
-        self.currentPos = currentLocation
-        self.currentVel = [random.random()] * len(currentLocation)
-        self.output = [self.globalBest, self.localBest, self.selfBest,self.currentPos]
+        self.currentPos = [0] * dimensions
+        for d in range(dimensions):
+            self.currentPos[d] = random.uniform(-1, 1) * bounds[0]
+        self.localBest = self.currentPos
+        self.selfBest = self.currentPos
+        self.currentVel = [random.random()] * dimensions
+        # self.output = [self.globalBest, self.localBest, self.selfBest,self.currentPos]
         self.formattedList = []
 
     def printVals(self):
@@ -32,8 +37,8 @@ class Particle():
             for i in item:
                 #print(i)
                 self.formattedList.append("%.2f"%i)        
-        print(self.name)
-        print('\tGlobal Best:',self.globalBest)
+        # print(self.name)
+        # print('\tGlobal Best:',self.globalBest)
         print('\tLocal Best:',self.localBest)
         print('\tSelf Best:',self.selfBest)
         print('\tCurrent Location:',self.currentPos)
@@ -46,27 +51,25 @@ class Particle():
             for i in item:
                 #print(i)
                 self.formattedList.append("%.2f"%i)        
-        print(self.name,'\tLocation:',self.currentPos,"\tFitness:{0:.3f}".format(fit.rastrigin(self.currentPos)))
+        print('\tLocation:',self.currentPos,"\tFitness:{0:.3f}".format(fit.rastrigin(self.currentPos)))
 
     def updateGlobal(self, newGlobal):
         self.globalBest = newGlobal
 
     def updateLocal(self, newLocal): 
         self.localBest = newLocal
-
-    @staticmethod
-    def New(name: str):
-        p = Particle(
-            [randVal() * 5.8, randVal() * 5.8],
-            name
-        )
-        return p
-
+        
     def IsLocalBest(self, loc, f):
-        if loc < f(self.currentPos):
+        if loc <= f(self.currentPos):
             return True
         return False
 
+    def CheckBounds(self, upper, lower):
+        for i in range(len(self.currentPos)):
+            if self.currentPos[i] > upper:
+                self.currentPos[i] = upper
+            elif self.currentPos[i] < lower:
+                self.currentPos[i] = lower
 
 # define the Swarm type
 Swarm = List[Particle]
