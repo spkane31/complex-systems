@@ -17,11 +17,11 @@ class Swarm():
         dims: int,
         fitness,
         bounds: tuple,
-        swapping=False,
-        velocities=False, 
-        decrease_velocity=False,
-        add_particle=0,
-        replace_particle= False
+        swapping=0.0,
+        velocities=0.0, 
+        decrease_velocity=0.0,
+        add_particle=0.0,
+        replace_particle= 0.0
     ):
 
         self.dimensions = dims
@@ -44,7 +44,7 @@ class Swarm():
         self.lower_bound = bounds[0] 
         self.upper_bound = bounds[1] 
         self.iterations = 0
-        self.epsilon = 0.001
+        self.epsilon = 0.005
 
         self.swapping = swapping
         self.velocities = velocities
@@ -73,7 +73,7 @@ class Swarm():
         self.iterations += 1
 
     def Run(self, epochs=100):
-        i = 0
+        ret = 0
         for i in range(epochs):
             self.SingleIteration()
 
@@ -83,25 +83,30 @@ class Swarm():
             self.UpdateVelocities()
             self.UpdatePositions()
 
-            if self.swapping:
-                self.SwapParticles()
+            self.SwapParticles()
 
-            if self.velocities:
-                self.SwapVelocities()         
+            self.SwapVelocities()         
 
-            if self.decrease_velocity:
-                self.DecreaseVelocity(1.2) 
+            self.DecreaseVelocity() 
 
-            if self.add_particle != 0:
-                self.particles.append(Particle(self.dimensions, self.bounds))
+            self.AddParticle()
+            # if random.random < self.add_particle:
+            #     self.particles.append(Particle(self.dimensions, self.bounds))
 
-            if self.replace_particle:
-                self.ReplaceParticle()
+            # if self.replace_particle:
+            self.ReplaceParticle()
 
-            if self.CheckConvergence():
-                return i
-
+            # print(i, ret)
+            # print(self.CheckConvergence() and ret == 0)
+            if self.CheckConvergence() and ret == 0:
+                # print('CONVERGED')
+                ret = i
+                # print(ret)
+        
+        if ret != 0:
+            return ret
         return epochs
+
 
     def IsGlobalBest(self, val) -> bool:
         if val < self.fitnessFunc(self.globalBest):
@@ -129,9 +134,9 @@ class Swarm():
             p.CheckBounds(self.upper_bound, self.lower_bound)    
         return
 
-    def SwapParticles(self, p=0.10):
+    def SwapParticles(self):
         # Happens with a probability p
-        if random.random() < p:
+        if random.random() < self.swapping:
             i1 = int(random.random() * len(self.particles))
             i2 = int(random.random() * len(self.particles))
             while i2 == i1:
@@ -142,8 +147,8 @@ class Swarm():
             self.particles[i2].currentPos = temp
         return
 
-    def SwapVelocities(self, p=0.10):
-        if random.random() < p:
+    def SwapVelocities(self):
+        if random.random() < self.velocities:
             i1 = int(random.random() * len(self.particles))
             i2 = int(random.random() * len(self.particles))
             while i2 == i1:
@@ -154,40 +159,50 @@ class Swarm():
             self.particles[i2].currentVel = temp
         return
 
-    def DecreaseVelocity(self, scale, p=0.25):
-        if random.random() < p:
+    def DecreaseVelocity(self):
+        if random.random() < self.decrease_velocity:
             i1 = int(random.random() * len(self.particles))
-
+            scale = 1 + random.random()
             for i in range(len(self.particles[i1].currentVel)):
                 self.particles[i1].currentVel[i] *= (1.0 / scale)
             
-    def ReplaceParticle(self, p=0.25):
-        if random.random() < p:
+    def ReplaceParticle(self):
+        if random.random() < self.replace_particle:
             i = int(random.random() * len(self.particles))
             self.particles[i] = Particle(self.dimensions, self.bounds)
+
+    def AddParticle(self):
+        if random.random() < self.add_particle:
+            self.particles.append(Particle(self.dimensions, self.bounds))
     
     def CheckConvergence(self):
         """
-        Checks the last ten global bests euclidean distances to the previous iterations
+        If all the particles are very close to each other, the particles have converged on each other
 
-        If this value is less than self.epsilon, the swarm has converged.
-
-        Not the best way to do it, but a start
+        This is exponential time to calculate all the distances.
         """
 
-        total = 0
-        for i in range(1, min(len(self.historicalBests), 10)):
-            temp = 0
-            for j in range(len(self.historicalBests[0])):
+        for i in range(len(self.particles)):
+            for j in range(i+1, len(self.particles)):
+                d = self.EuclideanDistance(self.particles[i].currentPos, self.particles[j].currentPos)
+                if d > self.epsilon:
+                    return False
+        # print("TRUE")
+        return True
 
-                temp += (self.historicalBests[-i][j] - self.historicalBests[-i-1][j]) ** 2
-            total += temp ** 0.5
+        # total = 0
+        # for i in range(1, min(len(self.historicalBests), 10)):
+        #     temp = 0
+        #     for j in range(len(self.historicalBests[0])):
 
-        if self.PRINTS: 
-            print(total)
-        if total < self.epsilon:
-            return True
-        return False
+        #         temp += (self.historicalBests[-i][j] - self.historicalBests[-i-1][j]) ** 2
+        #     total += temp ** 0.5
+
+        # if self.PRINTS: 
+        #     print(total)
+        # if total < self.epsilon:
+        #     return True
+        # return False
 
     def CorrectlyConverged(self, epsilon=0.001) -> bool:
         """
@@ -202,6 +217,12 @@ class Swarm():
         euc_dist = pow(euc_dist, 0.5)
         
         return euc_dist < 0.001
+
+    def EuclideanDistance(self, loc1, loc2):
+        sums = 0
+        for i in range(len(loc1)):
+            sums += (loc1[i] - loc2[i]) ** 2
+        return sums ** 0.5
 
 
 def at_least(k: int):
@@ -256,12 +277,22 @@ def process_arguments() -> argparse.Namespace:
 
     return args
 
+def boxAndWhiskerPlot(data: list):
+    # Plot a box and whisker of each strategy
+    
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax1.set_title('Comparing Different PSO Strategies')
+    ax1.set_xlabel('PSO Strategies')
+    ax1.set_ylabel('Iterations')
+    bp = ax1.boxplot(data)
+    fig.show()
+    
+
 if __name__ == "__main__":
     args = process_arguments()
     epochs = args.epochs
     iterations = args.iterations
     particles = args.particles
-    f = fit.string_to_func[args.fitness_func]
     f = args.fitness_func
     dimensions = args.dimensions
 
@@ -274,83 +305,87 @@ if __name__ == "__main__":
         stats.append([0] * iterations)
     convergeCount = [0] * num_policies
     time_to_run = [0] * num_policies
+    bestValuePerIteration = [[]] * num_policies
+    print(bestValuePerIteration)
     for iteration in range(iterations):
-        print(f"Iteration #{iteration}")
-
+        print(f'Iteration {iteration+1}')
         if args.run_classic or args.run_all:
             start = time.time()
             s = Swarm(particles, dimensions, f, bounds)
             i = s.Run(epochs)
             e = s.evaluations
-            if s.PRINTS: print(f(s.globalBest))
             if s.CorrectlyConverged():
                 convergeCount[0] += 1
             time_to_run[0] += time.time() - start
             stats[0][iteration] = i
+            bestValuePerIteration[0].append(e)
 
         if args.run_pos_swap or args.run_all:
             start = time.time()
-            s = Swarm(particles, dimensions, f, bounds, swapping=True)
+            s = Swarm(particles, dimensions, f, bounds, swapping=0.20)
             i = s.Run(epochs)
             e2 = s.evaluations
-            if s.PRINTS: print(f(s.globalBest))
             if s.CorrectlyConverged():
                 convergeCount[1] += 1
             time_to_run[1] += time.time() - start
             stats[1][iteration] = i
+            bestValuePerIteration[1].append(e2)
         
         if args.run_vel_swap or args.run_all:
             start = time.time()
-            s = Swarm(particles, dimensions,  f, bounds, velocities=True)
+            s = Swarm(particles, dimensions,  f, bounds, velocities=0.20)
             i = s.Run(epochs)
             e3 = s.evaluations
-            if s.PRINTS: print(f(s.globalBest))
             if s.CorrectlyConverged():
                 convergeCount[2] += 1
             time_to_run[2] += time.time() - start
             stats[2][iteration] = i
+            bestValuePerIteration[2].append(e3)
 
         if args.run_dec_vel or args.run_all:
             start = time.time()
-            s = Swarm(particles, dimensions,  f, bounds, decrease_velocity=True)
+            s = Swarm(particles, dimensions,  f, bounds, decrease_velocity=0.20)
             i = s.Run(epochs)
             e4 = s.evaluations
-            if s.PRINTS: print(f(s.globalBest))
             if s.CorrectlyConverged():
                 convergeCount[3]+= 1
             time_to_run[3] += time.time() - start
             stats[3][iteration] = i
+            bestValuePerIteration[3].append(e4)
 
         if args.run_add_particle or args.run_all:
             start = time.time()
-            s = Swarm(particles, dimensions, f, bounds, add_particle=20)
+            s = Swarm(particles, dimensions, f, bounds, add_particle=0.20)
             i = s.Run(epochs)
             e5 = s.evaluations
-            if s.PRINTS: print(f(s.globalBest))
             if s.CorrectlyConverged():
                 convergeCount[4] += 1
             time_to_run[4] += time.time() - start
             stats[4][iteration] = i
+            bestValuePerIteration[4].append(e5)
 
         if args.run_replace_particle or args.run_all:
             start = time.time()
-            s = Swarm(particles, dimensions, f, bounds, replace_particle=True)
+            s = Swarm(particles, dimensions, f, bounds, replace_particle=0.20)
             i = s.Run(epochs)
             e6 = s.evaluations
-            if s.PRINTS: print(f(s.globalBest))
             if s.CorrectlyConverged():
                 convergeCount[5] += 1
             time_to_run[5] += time.time() - start
             stats[5][iteration] = i
+            bestValuePerIteration[5].append(e6)
     
 
+    labels = ["Classic", "Swapping Position", "Swapping Velocities", "Decrease Velocities", "Add Particle", "Replace Particle"]
     print("\nStats")
     for i in range(len(stats)):
-        print(f"\t{100 * convergeCount[i] / iterations} %.")
-        print(f"\tConverged in {sum(stats[i]) / iterations} iterations on average. Std. dev: {round(statistics.stdev(stats[i]), 2)}")
-        print(f"\tTime to converge {round(time_to_run[i] / iteration, 2)} seconds.")
+        print(labels[i])
+        print(f"\tCorrect convergence rate: {100 * convergeCount[i] / iterations} %.")
+        print(f"\tConverged in {round(sum(stats[i]) / iterations, 2)} iterations on average. Std. dev: {round(statistics.stdev(stats[i]), 2)}")
+        print(f"\tTime to converge {round(time_to_run[i] / iteration, 5)} seconds.\n")
     
-
+    boxAndWhiskerPlot(stats)
+    
     # Plotting
     fig = plt.figure()
     ax = plt.subplot(111)
@@ -360,7 +395,7 @@ if __name__ == "__main__":
     if args.run_classic:
         ax.plot(e, label="Classic PSO")
     if args.run_pos_swap:
-        ax.plot(e2, label="Swapping")
+        ax.plot(e2, label="Swapping Positions")
     if args.run_vel_swap:
         ax.plot(e3, label="Swap Velocities")
     if args.run_dec_vel:
