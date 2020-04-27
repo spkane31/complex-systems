@@ -73,38 +73,28 @@ class Swarm():
         self.iterations += 1
 
     def Run(self, epochs=100):
-        ret = 0
+        self.evaluations = [0] * epochs
         for i in range(epochs):
             self.SingleIteration()
 
-            self.evaluations.append(self.fitnessFunc(self.globalBest))
+            self.evaluations[i] = self.fitnessFunc(self.globalBest)
             self.historicalBests.append(self.globalBest)
 
             self.UpdateVelocities()
             self.UpdatePositions()
 
+            # Policies
             self.SwapParticles()
-
             self.SwapVelocities()         
-
             self.DecreaseVelocity() 
-
             self.AddParticle()
-            # if random.random < self.add_particle:
-            #     self.particles.append(Particle(self.dimensions, self.bounds))
-
-            # if self.replace_particle:
             self.ReplaceParticle()
 
-            # print(i, ret)
-            # print(self.CheckConvergence() and ret == 0)
-            if self.CheckConvergence() and ret == 0:
-                # print('CONVERGED')
-                ret = i
-                # print(ret)
-        
-        if ret != 0:
-            return ret
+            if self.CheckConvergence():
+                for j in range(i, epochs):
+                    self.evaluations[j] = self.evaluations[i]
+                return i
+                
         return epochs
 
 
@@ -288,6 +278,12 @@ def boxAndWhiskerPlot(data: list):
     fig.show()
     
 
+def increasingDimensions():
+    """
+    See how an increasing number of dimensions affects iterations to 
+    converge for each type.
+    """
+
 if __name__ == "__main__":
     args = process_arguments()
     epochs = args.epochs
@@ -305,8 +301,9 @@ if __name__ == "__main__":
         stats.append([0] * iterations)
     convergeCount = [0] * num_policies
     time_to_run = [0] * num_policies
+
     bestValuePerIteration = [[]] * num_policies
-    print(bestValuePerIteration)
+
     for iteration in range(iterations):
         print(f'Iteration {iteration+1}')
         if args.run_classic or args.run_all:
