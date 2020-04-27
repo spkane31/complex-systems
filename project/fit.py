@@ -7,11 +7,6 @@ def rastrigin(x):
         ret += (xi ** 2 - 10 * np.cos(2 * np.pi * xi))
 
     return ret + (10 * len(x))
-    X = x[0]
-    Y = x[1]
-    Z = (X**2 - 10 * np.cos(2 * np.pi * X)) + \
-        (Y**2 - 10 * np.cos(2 * np.pi * Y)) + 20
-    return Z
 
 def banana(x):
     x1 = x[0]
@@ -31,18 +26,25 @@ def ackley(X):
     b = 0.2
     c = 2*np.pi
 
-
     part1 = 0
     part2 = 0
     
     for xi in X:
         part1 += xi ** 2
         part2 += np.cos(c * xi)
-    
-    return -a * np.exp(-b * 1.0/dims * part1) - np.exp(1.0 / dims *part2) + a + np.exp(1)
+    part1 = (1.0 / dims) * (part1 ** 0.5)
+
+    return -a * np.exp(-b * part1) - np.exp(1.0 / dims * part2) + a + np.exp(1)
     
 def sphere(X):
     return sum([xi**2 for xi in X])
+
+def rosenbrock(X):
+    ret = 0
+    for i in range(len(X)-1):
+        ret += (100 * (X[i+1] - X[i]) ** 2)
+        ret += (1 - X[i]) ** 2
+    return ret
 
 def styblinskiTang(X):
     if type(X) != list:
@@ -60,7 +62,8 @@ bounds = {
     "con": (0, 0),
     "ackley": (-5, 5),
     "sphere": (0, 0),
-    "styblinskiTang": (-5, 5)
+    "styblinski-tang": (-5, 5)
+    "rosenbrock": (0, 0)
 }
 
 string_to_func = {
@@ -69,7 +72,8 @@ string_to_func = {
     "con": con,
     "ackley": ackley,
     "sphere": sphere,
-    "stblinski-tang": styblinskiTang
+    "styblinski-tang": styblinskiTang
+    "rosenbrock": rosenbrock
 }
 
 def actual_minimum(func, dims):
@@ -87,3 +91,5 @@ def actual_minimum(func, dims):
         return [0] * dims
     elif func == "styblinskiTang":
         return [-2.903534] * dims
+    elif func == "rosenbrock":
+        return [1] * dims
