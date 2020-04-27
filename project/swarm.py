@@ -34,12 +34,11 @@ class Swarm():
         self._fitnessString = fitness
         self.globalBest = [10e9] * dims
         self.historicalBests = [self.globalBest]
-        self.evaluations = []
+        self.evaluations = [] # THIS IS IMPORTANT, SAVES THE GLOBAL BEST FOR EACH RUN
 
-        self.w = 0.5 # inertia
-        self.C = 0.4 # Cognitive potential
-        self.S = 0.2 # Social Potential
-        # self.S2 = 0.3 
+        self.w = 0.9 # inertia
+        self.C = 0.5 # Cognitive potential
+        self.S = 0.3 # Social Potential
 
         self.lower_bound = bounds[0] 
         self.upper_bound = bounds[1] 
@@ -177,36 +176,25 @@ class Swarm():
                 d = self.EuclideanDistance(self.particles[i].currentPos, self.particles[j].currentPos)
                 if d > self.epsilon:
                     return False
-        # print("TRUE")
         return True
 
-        # total = 0
-        # for i in range(1, min(len(self.historicalBests), 10)):
-        #     temp = 0
-        #     for j in range(len(self.historicalBests[0])):
-
-        #         temp += (self.historicalBests[-i][j] - self.historicalBests[-i-1][j]) ** 2
-        #     total += temp ** 0.5
-
-        # if self.PRINTS: 
-        #     print(total)
-        # if total < self.epsilon:
-        #     return True
-        # return False
-
-    def CorrectlyConverged(self, epsilon=0.001) -> bool:
+    def CorrectlyConverged(self, epsilon=0.01) -> bool:
         """
         Checks that the global minimum found by the swarm is relatively close to the
         actual global minimum, can be adjusted by increasing or decreasing epsilon
         """
-        correctMin = fit.actual_minimum(self._fitnessString, self.dimensions)
-        euc_dist = 0
-        for i in range(self.dimensions):
-            euc_dist += pow(correctMin[i] - self.globalBest[i], 2)
+        # correctMin = fit.actual_minimum(self._fitnessString, self.dimensions)
+        # euc_dist = 0
+        # for i in range(self.dimensions):
+        #     euc_dist += pow(correctMin[i] - self.globalBest[i], 2)
 
-        euc_dist = pow(euc_dist, 0.5)
+        # euc_dist = pow(euc_dist, 0.5)
+        # print(self.fitnessFunc(self.globalBest), self.fitnessFunc(fit.actual_minimum(self._fitnessString, self.dimensions)))
+        diff = self.fitnessFunc(self.globalBest) - self.fitnessFunc(fit.actual_minimum(self._fitnessString, self.dimensions))
+        # print(diff)
+        return abs(diff) < epsilon
         
-        return euc_dist < 0.001
+        # return euc_dist < 0.01
 
     def EuclideanDistance(self, loc1, loc2):
         sums = 0
@@ -278,11 +266,88 @@ def boxAndWhiskerPlot(data: list):
     fig.show()
     
 
-def increasingDimensions():
+def increasingDimensions(fxn, iterations, epochs, particles):
     """
-    See how an increasing number of dimensions affects iterations to 
-    converge for each type.
+    See how an increasing number of dimensions affects convergence rate
     """
+    print(f"Function: {fxn}\nIterations: {iterations}\nEpochs: {epochs}\nParticles: {particles}\n")
+
+    dimension_range = 13
+    bounds = fit.bounds[fxn]
+    
+    m_convergence = [0] * 6
+    for i in range(6):
+        m_convergence[i] = []
+
+    p = 0.20
+    for dim in range(2, 2 + dimension_range + 1):
+        print(f"Working on {dim} dimensions")
+        convergence_rate = [0] * 6
+        for iteration in range(iterations):
+            s = Swarm(particles, dim, f, bounds)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[0] += 1
+
+            s = Swarm(particles, dimensions, f, bounds, swapping=p)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[1] += 1
+
+            s = Swarm(particles, dimensions,  f, bounds, velocities=p)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[2] += 1
+            
+            s = Swarm(particles, dimensions,  f, bounds, decrease_velocity=p)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[3] += 1
+            
+            s = Swarm(particles, dimensions, f, bounds, add_particle=p)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[4] += 1
+            
+            s = Swarm(particles, dimensions, f, bounds, replace_particle=p)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[5] += 1
+
+        temp = [0] * 6
+        for i in range(len(convergence_rate)):
+            temp[i] = convergence_rate[i] / iterations
+
+        for i in range(len(temp)):
+            m_convergence[i].append(temp[i])
+        print(temp)
+
+    fig = plt.figure()
+    ax = plt.subplot(111)
+    x_axis = np.arange(2, 2+dimension_range+1)
+    labels = [
+        "Classic PSO",
+        "Swapping Positions",
+        "Swap Velocities",
+        "Decrease Velocities",
+        "Add Particle",
+        "Replace Particle"
+    ]
+
+    for i in range(len(m_convergence)):
+        ax.plot(x_axis, m_convergence[i], label=labels[i])
+
+    plt.xlabel('Dimensions')
+    plt.ylabel('Percent Converged Correctly')
+    plt.title(f'Correct Convergence As Dimensions Increase For {fxn} Function')
+    chartBox = ax.get_position()
+    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.6, chartBox.height])
+    ax.legend(loc="upper center", bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
+    
+    plt.show()
+           
+
+    return
 
 if __name__ == "__main__":
     args = process_arguments()
@@ -293,6 +358,10 @@ if __name__ == "__main__":
     dimensions = args.dimensions
 
     bounds = fit.bounds[args.fitness_func]
+
+    increasingDimensions(f, iterations, epochs, particles)
+
+    quit()
 
     num_policies = 6
 
@@ -305,7 +374,7 @@ if __name__ == "__main__":
     bestValuePerIteration = [[]] * num_policies
 
     for iteration in range(iterations):
-        print(f'Iteration {iteration+1}')
+        if iteration % 10 == 0: print(f'Iteration {iteration}')
         if args.run_classic or args.run_all:
             start = time.time()
             s = Swarm(particles, dimensions, f, bounds)
