@@ -252,6 +252,8 @@ def get_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--dec_vel", action="store_true", required=False, dest="run_dec_vel", help="run the velocity decreasing policy. default: %(default)s")
     ap.add_argument("--add_particle", action="store_true", required=False, dest="run_add_particle", help="run the add particle policy. default: %(default)s")
     ap.add_argument("--replace_particle", action="store_true", required=False, dest="run_replace_particle", help="run the replace particle policy. default: %(default)s")
+
+    ap.add_argument("output", metavar="OUTPUT_FILE", action="store")
     # fmt: on
     return ap
 
@@ -369,7 +371,7 @@ if __name__ == "__main__":
             )
             swarm_results[KEY].append(results.as_dict())
     
-    with open("output.json", "w") as resultsf:
+    with open(args.output, "w") as resultsf:
         json.dump(swarm_results, resultsf)
 
     # labels = ["Classic", "Swapping Position", "Swapping Velocities", "Decrease Velocities", "Add Particle", "Replace Particle"]
