@@ -28,7 +28,6 @@ class Particle():
         self.localBest = self.currentPos
         self.selfBest = self.currentPos
         self.currentVel = [random.random()] * dimensions
-        # self.output = [self.globalBest, self.localBest, self.selfBest,self.currentPos]
         self.formattedList = []
 
     def printVals(self):
@@ -52,12 +51,6 @@ class Particle():
                 #print(i)
                 self.formattedList.append("%.2f"%i)        
         print('\tLocation:',self.currentPos,"\tFitness:{0:.3f}".format(fit.rastrigin(self.currentPos)))
-
-    def updateGlobal(self, newGlobal):
-        self.globalBest = newGlobal
-
-    def updateLocal(self, newLocal): 
-        self.localBest = newLocal
         
     def IsLocalBest(self, loc, f):
         if loc <= f(self.currentPos):
