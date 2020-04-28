@@ -14,7 +14,8 @@ from results import RunResults
 
 from typing import Any, Dict, List, Optional
 
-class Swarm():
+
+class Swarm:
     def __init__(
         self,
         size: int,
@@ -22,26 +23,26 @@ class Swarm():
         fitness,
         bounds: tuple,
         swapping=0.0,
-        velocities=0.0, 
+        velocities=0.0,
         decrease_velocity=0.0,
         add_particle=0.0,
-        replace_particle= 0.0
+        replace_particle=0.0,
     ):
         self.dimensions = dims
         self.bounds = bounds
         self.particles = []
-        for _ in range(size): 
+        for _ in range(size):
             self.particles.append(Particle(dims, bounds))
-        
+
         self.fitnessFunc = fit.string_to_func[fitness]
         self._fitnessString = fitness
 
-        self.w = 0.5 # inertia
-        self.C = 0.4 # Cognitive potential
-        self.S = 0.2 # Social Potential
+        self.w = 0.5  # inertia
+        self.C = 0.4  # Cognitive potential
+        self.S = 0.2  # Social Potential
 
-        self.lower_bound = bounds[0] 
-        self.upper_bound = bounds[1] 
+        self.lower_bound = bounds[0]
+        self.upper_bound = bounds[1]
         self.iterations = 0
         self.epsilon = 0.005
 
@@ -54,13 +55,13 @@ class Swarm():
     @classmethod
     def update_particle_velocities(cls, particles, global_best_loc, w, C, S):
         for p in particles:
-            for i in range (len(p.currentPos)):
+            for i in range(len(p.currentPos)):
                 r1 = random.random()
                 r2 = random.random()
                 vel_cog = C * r1 * (p.selfBest[i] - p.currentPos[i])
                 vel_soc = S * r2 * (global_best_loc[i] - p.currentPos[i])
                 p.currentVel[i] = w * p.currentVel[i] + vel_cog + vel_soc
-    
+
     @classmethod
     def update_particle_positions(cls, particles, upper_bound, lower_bound):
         for p in particles:
@@ -74,7 +75,7 @@ class Swarm():
     ):
         cls.update_particle_velocities(particles, global_best_loc, w, C, S)
         cls.update_particle_positions(particles, upper_bound, lower_bound)
-    
+
     @classmethod
     def evaluate_particles(cls, particles, fitness_func, global_best_loc):
         best_loc = copy.deepcopy(global_best_loc)
@@ -98,25 +99,23 @@ class Swarm():
             self.w,
             self.C,
             self.S,
-            p_swap_pos = self.swapping,
-            p_swap_vel = self.velocities,
-            p_decrease_vel = self.decrease_velocity,
-            p_add_particle = self.add_particle,
-            p_replace_particle = self.replace_particle
+            p_swap_pos=self.swapping,
+            p_swap_vel=self.velocities,
+            p_decrease_vel=self.decrease_velocity,
+            p_add_particle=self.add_particle,
+            p_replace_particle=self.replace_particle,
         )
         start_time = time.time()
         # epoch 0: initial performace / find global best
         global_best_loc, global_best_fitness = self.evaluate_particles(
-            self.particles,
-            self.fitnessFunc,
-            None
+            self.particles, self.fitnessFunc, None
         )
         results.add_global_best(0, global_best_loc)
-        for e in range(1, epochs+1):
+        for e in range(1, epochs + 1):
             # Apply policies
             self.SwapParticles()
             self.SwapVelocities()
-            self.DecreaseVelocity() 
+            self.DecreaseVelocity()
             self.AddParticle()
             self.ReplaceParticle()
 
@@ -127,20 +126,18 @@ class Swarm():
                 self.C,
                 self.S,
                 self.upper_bound,
-                self.lower_bound
+                self.lower_bound,
             )
 
             # Evaluate particle positions, update particle and global bests
             global_best_loc, global_best_fitness = self.evaluate_particles(
-                self.particles,
-                self.fitnessFunc,
-                global_best_loc
+                self.particles, self.fitnessFunc, global_best_loc
             )
             results.add_global_best(e, global_best_loc)
             results.epochs += 1
 
             if self.CheckConvergence():
-                break # TODO: maybe fill out rest of results with last data?
+                break  # TODO: maybe fill out rest of results with last data?
         end_time = time.time()
         results.add_runtime(end_time - start_time)
         return results
@@ -173,8 +170,8 @@ class Swarm():
             i1 = int(random.random() * len(self.particles))
             scale = 1 + random.random()
             for i in range(len(self.particles[i1].currentVel)):
-                self.particles[i1].currentVel[i] *= (1.0 / scale)
-            
+                self.particles[i1].currentVel[i] *= 1.0 / scale
+
     def ReplaceParticle(self):
         if random.random() < self.replace_particle:
             i = int(random.random() * len(self.particles))
@@ -183,7 +180,7 @@ class Swarm():
     def AddParticle(self):
         if random.random() < self.add_particle:
             self.particles.append(Particle(self.dimensions, self.bounds))
-    
+
     def CheckConvergence(self):
         """
         If all the particles are very close to each other, the particles have converged on each other
@@ -191,8 +188,10 @@ class Swarm():
         This is exponential time to calculate all the distances.
         """
         for i in range(len(self.particles)):
-            for j in range(i+1, len(self.particles)):
-                d = self.EuclideanDistance(self.particles[i].currentPos, self.particles[j].currentPos)
+            for j in range(i + 1, len(self.particles)):
+                d = self.EuclideanDistance(
+                    self.particles[i].currentPos, self.particles[j].currentPos
+                )
                 if d > self.epsilon:
                     return False
         return True
@@ -230,8 +229,12 @@ def at_least(k: int):
                 raise ValueError()
             return n_int
         except:
-            raise argparse.ArgumentTypeError(f"invalid value {n}; expected positive integer >= {k}")
+            raise argparse.ArgumentTypeError(
+                f"invalid value {n}; expected positive integer >= {k}"
+            )
+
     return at_least_fn
+
 
 def get_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser()
@@ -257,6 +260,7 @@ def get_argparser() -> argparse.ArgumentParser:
     # fmt: on
     return ap
 
+
 def process_arguments() -> argparse.Namespace:
     args = get_argparser().parse_args()
     none_selected = not any(
@@ -276,22 +280,24 @@ def process_arguments() -> argparse.Namespace:
 
     return args
 
+
 def boxAndWhiskerPlot(data: list):
     # Plot a box and whisker of each strategy
-    
+
     fig, ax1 = plt.subplots(figsize=(10, 6))
-    ax1.set_title('Comparing Different PSO Strategies')
-    ax1.set_xlabel('PSO Strategies')
-    ax1.set_ylabel('Iterations')
+    ax1.set_title("Comparing Different PSO Strategies")
+    ax1.set_xlabel("PSO Strategies")
+    ax1.set_ylabel("Iterations")
     bp = ax1.boxplot(data)
     fig.show()
-    
+
 
 def increasingDimensions():
     """
     See how an increasing number of dimensions affects iterations to 
     converge for each type.
     """
+
 
 if __name__ == "__main__":
     args = process_arguments()
@@ -315,62 +321,52 @@ if __name__ == "__main__":
 
     swarm_results: Dict[str, Any] = {}
     for iteration in range(iterations):
-        print(f'Iteration {iteration+1}')
+        print(f"Iteration {iteration+1}")
 
         if args.run_classic or args.run_all:
             KEY = "classic"
             swarm_results.setdefault(KEY, [])
-            results = (
-                Swarm(particles, dimensions, f, bounds)
-                .Run(epochs)
-            )
+            results = Swarm(particles, dimensions, f, bounds).Run(epochs)
             swarm_results[KEY].append(results.as_dict())
 
         if args.run_pos_swap or args.run_all:
             KEY = "pos_swap"
             swarm_results.setdefault(KEY, [])
-            results = (
-                Swarm(particles, dimensions, f, bounds, swapping=0.20)
-                .Run(epochs)
-            )
+            results = Swarm(particles, dimensions, f, bounds, swapping=0.20).Run(epochs)
             swarm_results[KEY].append(results.as_dict())
-        
+
         if args.run_vel_swap or args.run_all:
             KEY = "vel_swap"
             swarm_results.setdefault(KEY, [])
-            results = (
-                Swarm(particles, dimensions,  f, bounds, velocities=0.20)
-                .Run(epochs)
+            results = Swarm(particles, dimensions, f, bounds, velocities=0.20).Run(
+                epochs
             )
             swarm_results[KEY].append(results.as_dict())
 
         if args.run_dec_vel or args.run_all:
             KEY = "dec_vel"
             swarm_results.setdefault(KEY, [])
-            results = (
-                Swarm(particles, dimensions,  f, bounds, decrease_velocity=0.20)
-                .Run(epochs)
-            )
+            results = Swarm(
+                particles, dimensions, f, bounds, decrease_velocity=0.20
+            ).Run(epochs)
             swarm_results[KEY].append(results.as_dict())
 
         if args.run_add_particle or args.run_all:
             KEY = "add_particle"
             swarm_results.setdefault(KEY, [])
-            results = (
-                Swarm(particles, dimensions, f, bounds, add_particle=0.20)
-                .Run(epochs)
+            results = Swarm(particles, dimensions, f, bounds, add_particle=0.20).Run(
+                epochs
             )
             swarm_results[KEY].append(results.as_dict())
 
         if args.run_replace_particle or args.run_all:
             KEY = "replace_particle"
             swarm_results.setdefault(KEY, [])
-            results = (
-                Swarm(particles, dimensions, f, bounds, replace_particle=0.20)
-                .Run(epochs)
-            )
+            results = Swarm(
+                particles, dimensions, f, bounds, replace_particle=0.20
+            ).Run(epochs)
             swarm_results[KEY].append(results.as_dict())
-    
+
     with open(args.output, "w") as resultsf:
         json.dump(swarm_results, resultsf)
 
@@ -381,9 +377,9 @@ if __name__ == "__main__":
     #     print(f"\tCorrect convergence rate: {100 * convergeCount[i] / iterations} %.")
     #     print(f"\tConverged in {round(sum(stats[i]) / iterations, 2)} iterations on average. Std. dev: {round(statistics.stdev(stats[i]), 2)}")
     #     print(f"\tTime to converge {round(time_to_run[i] / iteration, 5)} seconds.\n")
-    
+
     # boxAndWhiskerPlot(stats)
-    
+
     # # Plotting
     # fig = plt.figure()
     # ax = plt.subplot(111)
@@ -402,7 +398,6 @@ if __name__ == "__main__":
     #     ax.plot(e5, label="Add Particle")
     # if args.run_replace_particle or args.run_all:
     #     ax.plot(e6, label="Replace Particle")
-
 
     # plt.xlabel("Epochs")
     # plt.ylabel("Value")
