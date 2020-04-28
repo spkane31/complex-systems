@@ -62,7 +62,7 @@ bounds = {
     "con": (0, 0),
     "ackley": (-5, 5),
     "sphere": (0, 0),
-    "styblinski-tang": (-5, 5)
+    "styblinski-tang": (-5, 5),
     "rosenbrock": (0, 0)
 }
 
@@ -72,7 +72,7 @@ string_to_func = {
     "con": con,
     "ackley": ackley,
     "sphere": sphere,
-    "styblinski-tang": styblinskiTang
+    "styblinski-tang": styblinskiTang,
     "rosenbrock": rosenbrock
 }
 
