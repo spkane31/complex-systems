@@ -320,6 +320,22 @@ if __name__ == "__main__":
     bestValuePerIteration = [[]] * num_policies
 
     swarm_results: Dict[str, Any] = {}
+    # structure of swarm_results JSON:
+    # {
+    #     "classic": [
+    #         {iteration1_runresults}
+    #         {iteration2_runresults}
+    #         ...
+    #         {iterationNIter_runresults}
+    #     ],
+    #     "pso_type_2": [
+    #         {iteration1_runresults}
+    #         {iteration2_runresults}
+    #         ...
+    #         {iterationNIter_runresults}
+    #     ],
+    #     ...
+    # }
     for iteration in range(iterations):
         print(f"Iteration {iteration+1}")
 
