@@ -22,6 +22,9 @@ class Swarm:
         dims: int,
         fitness,
         bounds: tuple,
+        w: float=0.5,
+        C: float=0.4,
+        S: float=0.2,
         swapping=0.0,
         velocities=0.0,
         decrease_velocity=0.0,
@@ -37,9 +40,9 @@ class Swarm:
         self.fitnessFunc = fit.string_to_func[fitness]
         self._fitnessString = fitness
 
-        self.w = 0.5  # inertia
-        self.C = 0.4  # Cognitive potential
-        self.S = 0.2  # Social Potential
+        self.w = w  # inertia
+        self.C = C  # Cognitive potential
+        self.S = S  # Social Potential
 
         self.lower_bound = bounds[0]
         self.upper_bound = bounds[1]
@@ -214,7 +217,8 @@ class Swarm:
         euc_dist = pow(euc_dist, 0.5)
         return euc_dist < epsilon
 
-    def EuclideanDistance(self, loc1, loc2):
+    @staticmethod
+    def EuclideanDistance(loc1, loc2):
         sums = 0
         for i in range(len(loc1)):
             sums += (loc1[i] - loc2[i]) ** 2
