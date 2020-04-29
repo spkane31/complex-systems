@@ -50,7 +50,7 @@ def metafitness(position, size=20, dims=10, iters=5, epochs=100):
                 add_particle=0.0,
                 replace_particle=replace_particle
             )
-        res = s.Run(epochs=epochs)
+            res = s.Run(epochs=epochs)
         # TODO: finish this by aggregating stats and boiling it all down
         # to a single "fitness" number that is best when minimized.
 
