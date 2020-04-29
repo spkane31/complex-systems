@@ -35,7 +35,7 @@ def metafitness(position, size=20, dims=10, iters=5, epochs=100):
         task_bounds = fit.bounds[task_name]
         task_best_loc = fit.actual_minimum(task_name, dims)
         task_best_val = fit.string_to_func[task_name](task_best_loc)
-        for iter in range(iters):
+        for iter_ in range(iters):
             s = Swarm(
                 size,
                 dims,
