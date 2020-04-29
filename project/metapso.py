@@ -17,7 +17,7 @@ meta_params = [
 ]
 
 
-def metafitness(position, size=20, dims=10, iters=5, epochs=100):
+def metafitness(position, size=20, dims=10, iters=5, epochs=100, task_names=None):
     # unpack position vector
     (
         w,
@@ -30,11 +30,16 @@ def metafitness(position, size=20, dims=10, iters=5, epochs=100):
         replace_particle,
     ) = position
 
-    for task_name in ["rastrigin", "ackley", "sphere"]:
+    task_names = task_names if task_names is not None else ["rastrigin", "ackley", "sphere"]
+
+    task_errors = []
+    for itask, task_name in enumerate(task_names):
         task = fit.string_to_func[task_name]
         task_bounds = fit.bounds[task_name]
         task_best_loc = fit.actual_minimum(task_name, dims)
-        task_best_val = fit.string_to_func[task_name](task_best_loc)
+        task_best_val = task(task_best_loc)
+
+        iterations_errors = []
         for iter_ in range(iters):
             s = Swarm(
                 size,
@@ -50,9 +55,22 @@ def metafitness(position, size=20, dims=10, iters=5, epochs=100):
                 add_particle=0.0,
                 replace_particle=replace_particle
             )
-            res = s.Run(epochs=epochs)
-        # TODO: finish this by aggregating stats and boiling it all down
-        # to a single "fitness" number that is best when minimized.
+            result = s.Run(epochs=epochs)
+            swarm_best_key = sorted(list(result["global_bests"].keys()))[-1]
+            swarm_best_loc = result["global_bests"][swarm_best_key]
+            swarm_best_val = task(swarm_best_loc)
+
+            error = (task_best_val - swarm_best_val) ** 2
+            iterations_errors.append(error)
+        avg_iterations_error = sum(iterations_errors) / len(iterations_errors)
+        task_errors.append(avg_iterations_error)
+    
+    # now we have a list (per-task) of average errors.
+    # combine *those* with an average (TODO: maybe some consistent scaling?)
+
+    # this is our final "meta"-fitness we are trying to optimize.
+    avg_task_error = sum(task_errors) / len(task_errors)
+    return avg_task_error
 
 def _dummy_false(*args, **kwargs):
     return False
