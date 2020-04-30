@@ -22,4 +22,4 @@ tests with the pyswarms library for comparison
 # Plots
 * plot the average value at each iteration (the best case for the chosen functions is all 0)
 * how does convergence scale with the number of particles
-* time to converge affected by number of particles
+* probability increase with 
