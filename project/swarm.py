@@ -284,6 +284,7 @@ def increasingDimensions(fxn, iterations, epochs, particles):
         print(f"Working on {dim} dimensions")
         convergence_rate = [0] * 6
         for iteration in range(iterations):
+            if iteration % 10 == 0: print(f'\tIteration #{iteration}')
             s = Swarm(particles, dim, f, bounds)
             i = s.Run(epochs)
             if s.CorrectlyConverged():
@@ -345,9 +346,200 @@ def increasingDimensions(fxn, iterations, epochs, particles):
     ax.legend(loc="upper center", bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
     
     plt.show()
-           
+    return
+
+def IncreasingProbabilities(fxn, iteration, epochs, particle, dimension):
+
+    m_convergence = [0] * 5
+    for i in range(5):
+        m_convergence[i] = []
+    
+    probs = [p/100 for p in range(0, 100, 5)]
+
+    for prob in probs:
+        print(f"Working on p={prob}")
+        convergence_rate = [0] * 5
+        start = time.time()
+        for iteration in range(iterations):
+            if iteration % 10 == 0: print(f'\tIteration #{iteration}')
+            s = Swarm(particles, dimensions, fxn, bounds, swapping=prob)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[0] += 1
+
+            s = Swarm(particles, dimensions,  f, bounds, velocities=prob)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[1] += 1
+            
+            s = Swarm(particles, dimensions,  f, bounds, decrease_velocity=prob)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[2] += 1
+
+            s = Swarm(particles, dimensions, f, bounds, add_particle=prob)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[3] += 1
+
+            s = Swarm(particles, dimensions, f, bounds, replace_particle=prob)
+            i = s.Run(epochs)
+            if s.CorrectlyConverged():
+                convergence_rate[4] += 1
+        temp = [0] * 5
+        for i in range(len(convergence_rate)):
+            temp[i] = convergence_rate[i] / iterations
+
+        for i in range(len(temp)):
+            m_convergence[i].append(temp[i])
+                
+        print(f"\t{time.time() - start}")
+
+    fig = plt.figure()
+    ax = plt.subplot(111)
+
+    labels = [
+        "Swapping Positions",
+        "Swap Velocities",
+        "Decrease Velocities",
+        "Add Particle",
+        "Replace Particle"
+    ]
+    
+    for i in range(len(m_convergence)):
+        ax.plot(probs, m_convergence[i], label=labels[i])
+
+    plt.xlabel('Dimensions')
+    plt.ylabel('Percent Converged Correctly')
+    plt.title(f'Correct Convergence vs. Prob Increase')
+    chartBox = ax.get_position()
+    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.6, chartBox.height])
+    ax.legend(loc="upper center", bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
+    
+    plt.show()
 
     return
+
+def AveragePosition(fxn, iterations, epochs, particles, dimensions):
+    average_positions = []
+    bounds = fit.bounds[fxn]
+
+    temp = [0] * epochs
+    # Classic
+    print("Classic PSO")
+    for iteration in range(iterations):
+        if iteration % 10 == 0: print(f'\tIteration: {iteration}')
+        s = Swarm(particles, dimensions, fxn, bounds)
+        _ = s.Run(epochs)
+        e = s.evaluations
+        for i in range(len(e)):
+            temp[i] += e[i]
+            
+    for i in range(len(temp)):
+        temp[i] = temp[i] / iterations
+    average_positions.append(temp)
+
+    # Swap Positions
+    temp = [0] * epochs
+    print("Swapping particles")
+    for iteration in range(iterations):
+        if iteration % 10 == 0: print(f'\tIteration: {iteration}')
+        s = Swarm(particles, dimensions, fxn, bounds, swapping=0.20)
+        _ = s.Run(epochs)
+        e = s.evaluations
+        for i in range(len(e)):
+            temp[i] += e[i]
+            
+    for i in range(len(temp)):
+        temp[i] = temp[i] / iterations
+    average_positions.append(temp)
+
+    # Swap velocities
+    temp = [0] * epochs
+    print("Swapping velocities")
+    for iteration in range(iterations):
+        if iteration % 10 == 0: print(f'\tIteration: {iteration}')
+        s = Swarm(particles, dimensions, fxn, bounds, velocities=0.20)
+        _ = s.Run(epochs)
+        e = s.evaluations
+        for i in range(len(e)):
+            temp[i] += e[i]
+            
+    for i in range(len(temp)):
+        temp[i] = temp[i] / iterations
+    average_positions.append(temp)
+
+    # Decreasing velocities
+    temp = [0] * epochs
+    print("Decreasing velocities")
+    for iteration in range(iterations):
+        if iteration % 10 == 0: print(f'\tIteration: {iteration}')
+        s = Swarm(particles, dimensions, fxn, bounds, decrease_velocity=0.20)
+        _ = s.Run(epochs)
+        e = s.evaluations
+        for i in range(len(e)):
+            temp[i] += e[i]
+            
+    for i in range(len(temp)):
+        temp[i] = temp[i] / iterations
+    average_positions.append(temp)
+
+    # add particle
+    temp = [0] * epochs
+    print("Add particle")
+    for iteration in range(iterations):
+        if iteration % 10 == 0: print(f'\tIteration: {iteration}')
+        s = Swarm(particles, dimensions, fxn, bounds, add_particle=0.20)
+        _ = s.Run(epochs)
+        e = s.evaluations
+        for i in range(len(e)):
+            temp[i] += e[i]
+            
+    for i in range(len(temp)):
+        temp[i] = temp[i] / iterations
+    average_positions.append(temp)
+
+    # replace particle
+    temp = [0] * epochs
+    print("Replace particle")
+    for iteration in range(iterations):
+        if iteration % 10 == 0: print(f'\tIteration: {iteration}')
+        s = Swarm(particles, dimensions, fxn, bounds, replace_particle=0.20)
+        _ = s.Run(epochs)
+        e = s.evaluations
+        for i in range(len(e)):
+            temp[i] += e[i]
+            
+    for i in range(len(temp)):
+        temp[i] = temp[i] / iterations
+    average_positions.append(temp)
+
+    labels = [
+        "Classic PSO",
+        "Swapping Positions",
+        "Swap Velocities",
+        "Decrease Velocities",
+        "Add Particle",
+        "Replace Particle"
+    ]
+
+    x_axis = np.arange(0, epochs)
+    fig = plt.figure()
+    ax = plt.subplot(111)
+
+    for i in range(len(average_positions)):
+        ax.plot(x_axis, average_positions[i], label=labels[i])
+
+    plt.xlabel('Epoch')
+    plt.ylabel('Average Global Best')
+    plt.title(f'Average Position Over Time Dimensions={dimensions}')
+    chartBox = ax.get_position()
+    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.6, chartBox.height])
+    ax.legend(loc="upper center", bbox_to_anchor=(1.45, 0.8), shadow=True, ncol=1)
+    
+    plt.show()
+    return
+
 
 if __name__ == "__main__":
     args = process_arguments()
@@ -359,8 +551,9 @@ if __name__ == "__main__":
 
     bounds = fit.bounds[args.fitness_func]
 
-    increasingDimensions(f, iterations, epochs, particles)
-
+    # increasingDimensions(f, iterations, epochs, particles)
+    # IncreasingProbabilities(f, iterations, epochs, particles, dimensions)
+    AveragePosition(f, iterations, epochs, particles, dimensions)
     quit()
 
     num_policies = 6
